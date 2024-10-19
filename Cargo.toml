@@ -36,6 +36,6 @@ ash = { version = "0.38", features = [ "linked" ] }
 sdl2 = "0.37"
 
 [workspace.lints.clippy]
-needless_return = "allow"
+needless_return = "allow"   # I like returns
 
 #==============================================================================

@@ -19,7 +19,7 @@ fn get_hi_bits_for_u64_mul(a: u64, b: u64) -> u64 {
     let b_hi = b >> 32;
     let b_lo = b & 0xFFFFFFFF;
 
-    let res = (a_hi * b_lo >> 32) + (a_lo * b_hi >> 32) + a_hi * b_hi;
+    let res = ((a_hi * b_lo) >> 32) + ((a_lo * b_hi) >> 32) + a_hi * b_hi;
     return res;
 }
 
@@ -67,7 +67,7 @@ macro_rules! impl_32 {
             #[inline(always)]
             fn from_rand_32(rnum: u32) -> $uint {
                 // Take highest bits
-                return (rnum >> (32 - size_of::<$uint>() * 8)) as $uint;
+                return (rnum >> (32 - <$uint>::BITS)) as $uint;
             }
 
             #[inline(always)]
@@ -102,7 +102,7 @@ macro_rules! impl_64 {
             #[inline(always)]
             fn from_rand_64(rnum: u64) -> $uint {
                 // Take highest bits
-                return (rnum >> (64 - size_of::<$uint>() * 8)) as $uint;
+                return (rnum >> (64 - <$uint>::BITS)) as $uint;
             }
 
             #[inline(always)]

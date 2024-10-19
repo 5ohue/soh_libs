@@ -42,7 +42,7 @@ impl Instance {
         };
 
         let create_info = vk::InstanceCreateInfo::default()
-            .application_info(&app_info)
+            .application_info(app_info)
             .enabled_extension_names(&required_extensions);
 
         let entry = Entry::linked();
@@ -81,6 +81,9 @@ impl Instance {
         });
     }
 
+    /// # Safety
+    ///
+    /// The instance must be destroyed only after everything else has been destroyed
     pub unsafe fn destroy(&mut self) {
         self.instance.destroy_instance(None);
         self.is_destroyed = true;

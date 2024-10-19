@@ -6,7 +6,7 @@ pub mod prelude;
 pub use engine::{Engine32, Engine64};
 pub use engine::generators::*;
 
-pub type RNG32 = LCG;
+pub type RNG32 = Lcg;
 pub type RNG64 = SplitMix;
 
 #[cfg(test)]

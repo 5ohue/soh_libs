@@ -8,7 +8,7 @@ mod xoshiro_256_ss;
 
 pub mod generators {
     // 32 bit generators
-    pub type LCG = super::lcg::LCG<1664525, 1013904223>;
+    pub type Lcg = super::lcg::Lcg<1664525, 1013904223>;
     pub use super::xoshiro_128_ss::Xoshiro128SS;
 
     // 64 bit generators

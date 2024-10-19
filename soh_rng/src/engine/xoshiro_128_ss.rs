@@ -7,7 +7,7 @@ pub struct Xoshiro128SS {
 
 impl Engine32 for Xoshiro128SS {
     fn set_seed(&mut self, seed: u32) {
-        let mut lcg = super::LCG::new(seed);
+        let mut lcg = super::Lcg::new(seed);
         self.state.iter_mut().for_each(|s| *s = lcg.gen::<u32>());
     }
 
