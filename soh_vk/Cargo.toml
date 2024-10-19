@@ -1,9 +1,12 @@
 [package]
 name = "soh_vk"
-version = "0.1.0"
-edition = "2021"
+version.workspace = true
+edition.workspace = true
 
 [dependencies]
-ash = { version = "0.38", features = [ "linked" ] }
-sdl2 = "0.37"
-anyhow = "1.0"
+ash = { workspace = true }
+sdl2 = { workspace = true }
+anyhow = { workspace = true }
+
+[lints]
+workspace = true

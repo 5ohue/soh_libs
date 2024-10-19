@@ -1,3 +1,5 @@
+#==============================================================================
+# Crate config
 [package]
 name = "soh_libs"
 version = "0.1.0"
@@ -13,3 +15,27 @@ default = [ ]
 rng = [ "dep:soh_rng" ]
 log = [ "dep:soh_log" ]
 vk  = [ "dep:soh_vk" ]
+
+#==============================================================================
+# Workspace config
+[workspace]
+members = [
+    "soh_rng",
+    "soh_log",
+    "soh_vk"
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+
+[workspace.dependencies]
+anyhow = ">=1.0,<2.0"
+clap = { version = ">=4.0,<5.0", features = [ "derive" ] }
+ash = { version = "0.38", features = [ "linked" ] }
+sdl2 = "0.37"
+
+[workspace.lints.clippy]
+needless_return = "allow"
+
+#==============================================================================
