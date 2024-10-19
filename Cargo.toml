@@ -1,0 +1,15 @@
+[package]
+name = "soh_libs"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+soh_rng = { path = "./soh_rng", optional = true }
+soh_log = { path = "./soh_log", optional = true }
+soh_vk  = { path = "./soh_vk",  optional = true }
+
+[features]
+default = [ ]
+rng = [ "dep:soh_rng" ]
+log = [ "dep:soh_log" ]
+vk  = [ "dep:soh_vk" ]

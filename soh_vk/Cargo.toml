@@ -1,0 +1,9 @@
+[package]
+name = "soh_vk"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+ash = { version = "0.38", features = [ "linked" ] }
+sdl2 = "0.37"
+anyhow = "1.0"
