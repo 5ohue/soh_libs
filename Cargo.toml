@@ -6,15 +6,17 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-soh_rng = { path = "./soh_rng", optional = true }
-soh_log = { path = "./soh_log", optional = true }
-soh_vk  = { path = "./soh_vk",  optional = true }
+soh_rng = { workspace = true, optional = true }
+soh_log = { workspace = true, optional = true }
+soh_vk = { workspace = true, optional = true }
+soh_thread = { workspace = true, optional = true }
 
 [features]
 default = [ ]
 rng = [ "dep:soh_rng" ]
 log = [ "dep:soh_log" ]
-vk  = [ "dep:soh_vk" ]
+vk = [ "dep:soh_vk" ]
+thread = [ "dep:soh_thread" ]
 
 #==============================================================================
 # Workspace config
@@ -22,7 +24,8 @@ vk  = [ "dep:soh_vk" ]
 members = [
     "soh_rng",
     "soh_log",
-    "soh_vk"
+    "soh_vk" ,
+    "soh_thread"
 ]
 
 [workspace.package]
@@ -30,10 +33,20 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace.dependencies]
+# My libs
+soh_rng = { path = "./soh_rng" }
+soh_log = { path = "./soh_log" }
+soh_vk = { path = "./soh_vk" }
+soh_thread = { path = "./soh_thread" }
+
+# Other libs
 anyhow = ">=1.0,<2.0"
 clap = { version = ">=4.0,<5.0", features = [ "derive" ] }
+serde = { version = "1.0", features = [ "derive" ] }
+
 ash = { version = "0.38", features = [ "linked" ] }
 sdl2 = "0.37"
+ron = "0.8"
 
 [workspace.lints.clippy]
 needless_return = "allow"   # I like returns

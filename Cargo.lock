@@ -205,6 +205,7 @@ version = "0.1.0"
 dependencies = [
  "soh_log",
  "soh_rng",
+ "soh_thread",
  "soh_vk",
 ]
 
@@ -223,12 +224,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "soh_thread"
+version = "0.1.0"
+
+[[package]]
 name = "soh_vk"
 version = "0.1.0"
 dependencies = [
  "anyhow",
  "ash",
  "sdl2",
+ "soh_log",
 ]
 
 [[package]]
