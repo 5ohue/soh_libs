@@ -14,7 +14,7 @@ soh_thread = { workspace = true, optional = true }
 [features]
 default = [ ]
 rng = [ "dep:soh_rng" ]
-log = [ "dep:soh_log" ]
+log = [ "dep:soh_log", "soh_thread?/log" ]
 vk = [ "dep:soh_vk" ]
 thread = [ "dep:soh_thread" ]
 
@@ -42,11 +42,11 @@ soh_thread = { path = "./soh_thread" }
 # Other libs
 anyhow = ">=1.0,<2.0"
 clap = { version = ">=4.0,<5.0", features = [ "derive" ] }
-serde = { version = "1.0", features = [ "derive" ] }
+serde = { version = ">=1.0,<2.0", features = [ "derive" ] }
 
-ash = { version = "0.38", features = [ "linked" ] }
-sdl2 = "0.37"
-ron = "0.8"
+ash = { version = "<1.0", features = [ "linked" ] }
+sdl2 = "<1.0"
+ron = "<1.0"
 
 [workspace.lints.clippy]
 needless_return = "allow"   # I like returns
