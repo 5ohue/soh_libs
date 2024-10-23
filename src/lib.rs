@@ -1,16 +1,17 @@
+//-----------------------------------------------------------------------------
 //! Collection of different libraries
+//-----------------------------------------------------------------------------
 
 #[cfg(feature = "rng")]
-pub mod rng {
-    pub use soh_rng::*;
-}
+pub use soh_rng as rng;
 
 #[cfg(feature = "log")]
-pub mod log {
-    pub use soh_log::*;
-}
+pub use soh_log as log;
 
 #[cfg(feature = "vk")]
-pub mod vk {
-    pub use soh_vk::*;
-}
+pub use soh_vk as vk;
+
+#[cfg(feature = "thread")]
+pub use soh_thread as thread;
+
+//-----------------------------------------------------------------------------
