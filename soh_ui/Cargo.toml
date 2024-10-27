@@ -1,0 +1,15 @@
+[package]
+name = "soh_ui"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+soh_log = { workspace = true, optional = true }
+anyhow = { workspace = true }
+ash = { workspace = true }
+
+[features]
+log = [ "dep:soh_log" ]
+
+[lints]
+workspace = true
