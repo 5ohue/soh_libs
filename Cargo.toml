@@ -14,7 +14,7 @@ soh_thread = { workspace = true, optional = true }
 [features]
 default = [ ]
 rng = [ "dep:soh_rng" ]
-log = [ "dep:soh_log", "soh_thread?/log" ]
+log = [ "dep:soh_log", "soh_vk?/log", "soh_thread?/log" ]
 vk = [ "dep:soh_vk" ]
 thread = [ "dep:soh_thread" ]
 

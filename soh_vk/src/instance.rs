@@ -1,56 +1,62 @@
 use anyhow::{anyhow, Result};
 use ash::{vk, Entry};
+use std::ffi::CStr;
 
 pub struct Instance {
     instance: ash::Instance,
+    entry: Entry,
+
     is_destroyed: bool,
+
+    // EXT, KHR instances
+    instance_debug_utils: ash::ext::debug_utils::Instance,
+    instance_surface: ash::khr::surface::Instance,
 }
 
+// Getters
+impl Instance {
+    pub fn entry(&self) -> &Entry {
+        return &self.entry;
+    }
+
+    pub fn instance_debug_utils(&self) -> &ash::ext::debug_utils::Instance {
+        return &self.instance_debug_utils;
+    }
+    pub fn instance_surface(&self) -> &ash::khr::surface::Instance {
+        return &self.instance_surface;
+    }
+
+    pub fn are_validation_layers_enabled() -> bool {
+        // Only enable validation layers in a debug build
+        return cfg!(debug_assertions) == true;
+    }
+
+    pub fn is_destroyed(&self) -> bool {
+        return self.is_destroyed;
+    }
+    pub fn assert_not_destroyed(&self) {
+        assert!(
+            !self.is_destroyed,
+            "This should only be called before device is destroyed"
+        );
+    }
+}
+
+// Constructor, destructor
 impl Instance {
     pub fn new(app_info: &vk::ApplicationInfo, window: &sdl2::video::Window) -> Result<Instance> {
-        // Get extensions needed to create a vk surface
-        let required_extensions = unsafe {
-            let mut extension_count = 0;
-            let res = sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
-                window.raw(),
-                &mut extension_count,
-                std::ptr::null_mut(),
-            );
+        let entry = Entry::linked();
 
-            if res != sdl2::sys::SDL_bool::SDL_TRUE {
-                return Err(anyhow!(
-                    "Failed to get the SDL2 instance extension count ({})",
-                    sdl2::get_error()
-                ));
-            }
-
-            let mut extensions = vec![std::ptr::null(); extension_count as usize];
-            let res = sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
-                window.raw(),
-                &mut extension_count,
-                extensions.as_mut_ptr(),
-            );
-
-            if res != sdl2::sys::SDL_bool::SDL_TRUE {
-                return Err(anyhow!(
-                    "Failed to get the SDL2 instance extensions ({})",
-                    sdl2::get_error()
-                ));
-            }
-
-            extensions
-        };
+        let required_extensions = Self::get_sdl2_extensions(window)?;
+        let required_layers = Self::get_validation_layers(&entry)?;
 
         let create_info = vk::InstanceCreateInfo::default()
             .application_info(app_info)
+            .enabled_layer_names(&required_layers)
             .enabled_extension_names(&required_extensions);
-
-        let entry = Entry::linked();
 
         let supported_extensions = unsafe { entry.enumerate_instance_extension_properties(None)? };
         for &required_ext in required_extensions.iter() {
-            use std::ffi::CStr;
-
             let r_name = unsafe { CStr::from_ptr(required_ext) };
             let mut found = false;
 
@@ -73,36 +79,120 @@ impl Instance {
 
         let instance = unsafe { entry.create_instance(&create_info, None)? };
 
+        let instance_debug_utils = ash::ext::debug_utils::Instance::new(&entry, &instance);
+        let instance_surface = ash::khr::surface::Instance::new(&entry, &instance);
+
         drop(required_extensions);
 
         return Ok(Instance {
             instance,
+            entry,
+
             is_destroyed: false,
+
+            instance_debug_utils,
+            instance_surface,
         });
     }
 
     /// # Safety
-    ///
     /// The instance must be destroyed only after everything else has been destroyed
     pub unsafe fn destroy(&mut self) {
-        self.instance.destroy_instance(None);
         self.is_destroyed = true;
+        self.instance.destroy_instance(None);
     }
 }
 
-impl Drop for Instance {
-    fn drop(&mut self) {
-        assert!(
-            self.is_destroyed,
-            "Vulkan instance must be manually destroyed!"
-        );
+// Specific implementation
+impl Instance {
+    fn get_validation_layers(entry: &Entry) -> Result<Vec<*const i8>> {
+        const VALIDATION_LAYERS: &[&std::ffi::CStr] = &[c"VK_LAYER_KHRONOS_validation"];
+
+        if !Self::are_validation_layers_enabled() {
+            return Ok(vec![]);
+        }
+
+        // Get available layers
+        let available_layers = unsafe { entry.enumerate_instance_layer_properties()? };
+
+        // Check if our validation layers are available
+        let mut res = Vec::new();
+
+        for &r_name in VALIDATION_LAYERS {
+            let mut found = false;
+            for available_layer in available_layers.iter() {
+                let a_name = available_layer.layer_name_as_c_str()?;
+
+                if r_name == a_name {
+                    found = true;
+                    break;
+                }
+            }
+
+            if found {
+                res.push(r_name.as_ptr());
+            }
+        }
+
+        return Ok(res);
+    }
+
+    /// Gets the extensions needed to create a vk surface
+    fn get_sdl2_extensions(window: &sdl2::video::Window) -> Result<Vec<*const i8>> {
+        use sdl2::sys::SDL_bool::SDL_TRUE;
+
+        // Get count
+        let mut extension_count = 0;
+        let res = unsafe {
+            sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
+                window.raw(),
+                &mut extension_count,
+                std::ptr::null_mut(),
+            )
+        };
+
+        if res != SDL_TRUE {
+            return Err(anyhow!(
+                "Failed to get the SDL2 instance extension count ({})",
+                sdl2::get_error()
+            ));
+        }
+
+        // Get extensions
+        let mut extensions = vec![std::ptr::null(); extension_count as usize];
+        let res = unsafe {
+            sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
+                window.raw(),
+                &mut extension_count,
+                extensions.as_mut_ptr(),
+            )
+        };
+
+        // Get validation layer extension
+        if Self::are_validation_layers_enabled() {
+            // Using `vk::EXT_DEBUG_UTILS_NAME` directly sounds dangerous
+            // (dangling pointer maybe??? `vk::EXT_DEBUG_UTILS_NAME` is `const`, not `static`)
+
+            static EXTENSION_NAME: &CStr = vk::EXT_DEBUG_UTILS_NAME;
+            extensions.push(EXTENSION_NAME.as_ptr());
+        }
+
+        if res != SDL_TRUE {
+            return Err(anyhow!(
+                "Failed to get the SDL2 instance extensions ({})",
+                sdl2::get_error()
+            ));
+        }
+
+        Ok(extensions)
     }
 }
 
-impl super::ToVK for Instance {
-    type TypeVK = ash::Instance;
+// Deref
+impl std::ops::Deref for Instance {
+    type Target = ash::Instance;
 
-    fn to_vk(&self) -> &Self::TypeVK {
+    fn deref(&self) -> &Self::Target {
         return &self.instance;
     }
 }

@@ -1,20 +1,27 @@
+//-----------------------------------------------------------------------------
 //! Convenient Vulkan wrappers
-
+//-----------------------------------------------------------------------------
+mod debug_messenger;
+mod device;
+mod framebuffer;
 mod instance;
-
+mod pipeline;
+mod queue;
+mod surface;
+mod swapchain;
+//-----------------------------------------------------------------------------
+pub mod shader;
+pub use shader::Shader;
+//-----------------------------------------------------------------------------
+pub mod command;
+pub mod sync;
+//-----------------------------------------------------------------------------
+pub use debug_messenger::*;
+pub use device::*;
+pub use framebuffer::*;
 pub use instance::*;
-
-/// Trait to easily convert wrapper types to VK (ash) types.
-///
-/// This trait provides a way to convert types from this library to their corresponding
-/// Vulkan (ash) types. Implementors of this trait should provide a `to_vk` method
-/// that returns a reference to the underlying Vulkan type.
-pub trait ToVK {
-    /// The type of the underlying Vulkan (ash) type.
-    type TypeVK;
-
-    /// Converts the wrapper type to its corresponding Vulkan (ash) type.
-    ///
-    /// Returns a reference to the underlying Vulkan type.
-    fn to_vk(&self) -> &Self::TypeVK;
-}
+pub use pipeline::*;
+pub use queue::*;
+pub use surface::*;
+pub use swapchain::*;
+//-----------------------------------------------------------------------------
