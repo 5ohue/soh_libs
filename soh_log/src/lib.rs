@@ -210,6 +210,31 @@ where
     }
 }
 
+impl <T> LogError for Option<T>
+{
+    type Output = T;
+
+    fn expect_log(self, msg: &str) -> Self::Output {
+        match self {
+            Some(val) => return val,
+            None => {
+                log_fatal!("{msg}");
+                panic!();
+            }
+        };
+    }
+    fn unwrap_log(self) -> Self::Output {
+        match self {
+            Some(val) => return val,
+            None => {
+                let msg = format!("called `unwrap_log()` on an `None` value");
+                log_fatal!("{msg}");
+                panic!();
+            }
+        }
+    }
+}
+
 //-----------------------------------------------------------------------------
 /// Global instance
 pub static LOGGER: Logger = Logger::new(Prio::Debug, Prio::Info);
