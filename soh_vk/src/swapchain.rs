@@ -165,7 +165,10 @@ impl Swapchain {
         }
 
         #[cfg(feature = "log")]
-        soh_log::log_warning!("Couldn't find desired surface format! Defaulting to {:?}", available_formats[0]);
+        soh_log::log_warning!(
+            "Couldn't find desired surface format! Defaulting to {:?}",
+            available_formats[0]
+        );
 
         return available_formats[0];
     }

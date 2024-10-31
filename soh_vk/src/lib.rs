@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
 //! Convenient Vulkan wrappers
 //-----------------------------------------------------------------------------
-mod debug_messenger;
+// Private modules
 mod device;
 mod framebuffer;
 mod instance;
@@ -10,13 +10,7 @@ mod queue;
 mod surface;
 mod swapchain;
 //-----------------------------------------------------------------------------
-pub mod shader;
-pub use shader::Shader;
-//-----------------------------------------------------------------------------
-pub mod command;
-pub mod sync;
-//-----------------------------------------------------------------------------
-pub use debug_messenger::*;
+// Public imports
 pub use device::*;
 pub use framebuffer::*;
 pub use instance::*;
@@ -24,4 +18,20 @@ pub use pipeline::*;
 pub use queue::*;
 pub use surface::*;
 pub use swapchain::*;
+//-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// Shader related structures
+pub mod shader;
+pub use shader::Shader;
+
+// Debug messenger
+pub mod debug;
+
+// Command pool and buffer
+pub mod command;
+
+// Synchronization promitives (fences, semaphores)
+pub mod sync;
+
 //-----------------------------------------------------------------------------

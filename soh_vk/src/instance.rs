@@ -50,10 +50,17 @@ impl Instance {
         let required_extensions = Self::get_sdl2_extensions(window)?;
         let required_layers = Self::get_validation_layers(&entry)?;
 
-        let create_info = vk::InstanceCreateInfo::default()
+        let mut create_info = vk::InstanceCreateInfo::default()
             .application_info(app_info)
             .enabled_layer_names(&required_layers)
             .enabled_extension_names(&required_extensions);
+
+        let mut opt_debug_utils_create_info = crate::debug::Messenger::create_info();
+        if let Some(ref mut debug_utils_create_info) = opt_debug_utils_create_info {
+            #[cfg(feature = "log")]
+            soh_log::log_debug!("Using validation layers to debug instance creation!");
+            create_info = create_info.push_next(debug_utils_create_info);
+        }
 
         let supported_extensions = unsafe { entry.enumerate_instance_extension_properties(None)? };
         for &required_ext in required_extensions.iter() {
