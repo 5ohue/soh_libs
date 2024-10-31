@@ -27,7 +27,10 @@ impl Framebuffer {
 
 // Constructor, destructor
 impl Framebuffer {
-    pub fn new(device: &crate::Device, swapchain: &crate::Swapchain) -> Result<Self> {
+    pub fn new_from_swapchain(
+        device: &crate::Device,
+        swapchain: &crate::Swapchain,
+    ) -> Result<Self> {
         let image_views = Self::create_image_views(device, swapchain)?;
         let render_pass = RenderPass::new(device, swapchain.image_format())?;
 
