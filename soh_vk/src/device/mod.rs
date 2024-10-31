@@ -43,16 +43,6 @@ impl Device {
     pub fn new(instance: &crate::Instance, surface: &vk::SurfaceKHR) -> Result<Self> {
         let physical = physical::Device::new(instance, surface)?;
 
-        #[cfg(feature = "log")]
-        {
-            soh_log::log_info!("Choose GPU: \"{}\"", physical.gpu_name());
-            soh_log::log_debug!("GPU Info: \"{:#?}\"", physical.info());
-            soh_log::log_debug!(
-                "Number of queues: {}",
-                physical.queue_family_indices().get_unique_indices().len()
-            );
-        }
-
         // First collect into a set (to have unique set of indices) and then for each index create
         // queue create info
         let queue_create_infos = physical

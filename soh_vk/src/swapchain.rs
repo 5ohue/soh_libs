@@ -153,9 +153,6 @@ impl Swapchain {
     }
 
     fn choose_swapchain_format(available_formats: &[vk::SurfaceFormatKHR]) -> vk::SurfaceFormatKHR {
-        #[cfg(feature = "log")]
-        soh_log::log_debug!("Available formats: {:#?}", available_formats);
-
         for &available_format in available_formats.iter() {
             if available_format.format == vk::Format::B8G8R8A8_SRGB
                 && available_format.color_space == vk::ColorSpaceKHR::SRGB_NONLINEAR

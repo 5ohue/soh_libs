@@ -50,24 +50,61 @@ impl Device {
     pub fn new(instance: &crate::Instance, surface: &vk::SurfaceKHR) -> Result<Self> {
         let devices = unsafe { instance.enumerate_physical_devices()? };
 
-        // Loop over all devices and choose the suitable one
-        let mut selected_device = vk::PhysicalDevice::null();
-        for &available_device in devices.iter() {
-            if Self::is_device_suitable(instance, available_device, surface) {
-                selected_device = available_device;
-                break;
-            }
+        #[cfg(feature = "log")]
+        {
+            soh_log::log_info!("Available {} devices:", devices.len());
+            devices.iter().enumerate().for_each(|(idx, &device)| {
+                soh_log::log_info!(
+                    "    Device {}: \"{}\"",
+                    idx,
+                    PhysicalDeviceInfo::query_gpu_name(instance, device).unwrap()
+                );
+            })
         }
 
-        // Throw error if no device was chosen
-        if selected_device == vk::PhysicalDevice::null() {
+        // Loop over all devices and choose the suitable one
+        let suitable_devices = devices
+            .iter()
+            .enumerate()
+            .filter(|(_idx, &device)| {
+                return Self::is_device_suitable(instance, device, surface);
+            })
+            .collect::<Vec<_>>();
+
+        // Throw error if no suitable devices
+        if suitable_devices.is_empty() {
             return Err(anyhow!("Coudn't find suitable physical device"));
         }
 
+        #[cfg(feature = "log")]
+        {
+            soh_log::log_info!("Found {} suitable devices:", suitable_devices.len());
+            suitable_devices.iter().for_each(|(idx, &device)| {
+                soh_log::log_info!(
+                    "    Device {}: \"{}\"",
+                    idx,
+                    PhysicalDeviceInfo::query_gpu_name(instance, device).unwrap()
+                );
+            })
+        }
+
+        let selected_device = suitable_devices[0];
+        let gpu_info = PhysicalDeviceInfo::get_info(instance, *selected_device.1, surface).unwrap(); // This shouldn't panic because this function was already called for this
+                                                                                                     // device before
+
+        #[cfg(feature = "log")]
+        {
+            soh_log::log_info!("Choose GPU {}", selected_device.0);
+            soh_log::log_debug!("GPU Info: \"{:#?}\"", gpu_info);
+            soh_log::log_debug!(
+                "Number of queues: {}",
+                gpu_info.queue_family_indices.get_unique_indices().len()
+            );
+        }
+
         return Ok(Device {
-            physical_device: selected_device,
-            info: PhysicalDeviceInfo::get_info(instance, selected_device, surface).unwrap(), // This shouldn't panic because this function was already called for this
-                                                                                             // device before
+            physical_device: *selected_device.1,
+            info: gpu_info,
         });
     }
 
