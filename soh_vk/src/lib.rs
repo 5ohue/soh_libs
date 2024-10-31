@@ -28,6 +28,10 @@ pub use shader::Shader;
 // Debug messenger
 pub mod debug;
 
+// Allocated resources (buffers, images)
+pub mod res;
+pub use res::*;
+
 // Command pool and buffer
 pub mod command;
 
