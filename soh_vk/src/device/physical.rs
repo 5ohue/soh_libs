@@ -71,6 +71,7 @@ impl Device {
         });
     }
 
+    #[inline(always)]
     pub fn update_swapchain_support_info(
         &mut self,
         instance: &crate::Instance,
