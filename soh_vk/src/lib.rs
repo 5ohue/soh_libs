@@ -21,6 +21,10 @@ pub use swapchain::*;
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
+// Typedefs
+pub mod typedefs;
+pub use typedefs::*;
+
 // Shader related structures
 pub mod shader;
 pub use shader::Shader;
