@@ -15,26 +15,30 @@ pub enum Prio {
 }
 
 impl Prio {
-    fn get_color(&self) -> &'static [u8] {
+    fn get_color(&self) -> &str {
         match self {
-            Self::Debug => return b"\x1b[1;35m",
-            Self::Info => return b"\x1b[1;34m",
-            Self::Warning => return b"\x1b[1;33m",
-            Self::Error => return b"\x1b[1;31m",
-            Self::Fatal => return b"\x1b[1;91m",
+            Self::Debug => return "\x1b[1;35m",
+            Self::Info => return "\x1b[1;34m",
+            Self::Warning => return "\x1b[1;33m",
+            Self::Error => return "\x1b[1;31m",
+            Self::Fatal => return "\x1b[1;91m",
+        }
+    }
+
+    fn get_str(&self) -> &str {
+        match self {
+            Self::Debug => return "DEBUG",
+            Self::Info => return "INFO",
+            Self::Warning => return "WARN",
+            Self::Error => return "ERROR",
+            Self::Fatal => return "FATAL",
         }
     }
 }
 
 impl std::fmt::Display for Prio {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            Self::Debug => return f.write_str("DEBUG"),
-            Self::Info => return f.write_str("INFO"),
-            Self::Warning => return f.write_str("WARNING"),
-            Self::Error => return f.write_str("ERROR"),
-            Self::Fatal => return f.write_str("FATAL"),
-        }
+        return f.write_str(self.get_str());
     }
 }
 
@@ -146,15 +150,11 @@ impl Logger {
             return;
         }
 
-        let mut stderr = std::io::stderr();
-        let _ = stderr.write(priority.get_color());
-        let _ = stderr.write(b"[");
-        let _ = stderr.write(priority.to_string().as_bytes());
-        let _ = stderr.write(b"] ");
-        let _ = stderr.write(b"\x1b[0m");
-        let _ = stderr.write(msg.as_bytes());
-        let _ = stderr.write(b"\n");
-        let _ = stderr.flush();
+        eprintln!(
+            "  {color}{prio:#5}\x1b[0m - {msg}",
+            color = priority.get_color(),
+            prio = priority.to_string(),
+        );
     }
 
     fn log_file(&self, priority: Prio, msg: &str) {
@@ -202,16 +202,14 @@ where
         match self {
             Ok(val) => return val,
             Err(error) => {
-                let msg = format!("called `unwrap_log()` on an `Err` value: {error:?}");
-                log_fatal!("{msg}");
+                log_fatal!("called `unwrap_log()` on an `Err` value: {error:?}");
                 panic!();
             }
         }
     }
 }
 
-impl <T> LogError for Option<T>
-{
+impl<T> LogError for Option<T> {
     type Output = T;
 
     fn expect_log(self, msg: &str) -> Self::Output {
@@ -227,8 +225,7 @@ impl <T> LogError for Option<T>
         match self {
             Some(val) => return val,
             None => {
-                let msg = format!("called `unwrap_log()` on an `None` value");
-                log_fatal!("{msg}");
+                log_fatal!("called `unwrap_log()` on an `None` value");
                 panic!();
             }
         }
