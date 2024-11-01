@@ -27,6 +27,34 @@ impl Swapchain {
         surface: &crate::Surface,
         window_size: (u32, u32),
     ) -> Result<Self> {
+        return Self::create_swapchain(device, surface, window_size, None);
+    }
+
+    pub fn recreate(
+        &mut self,
+        device: &crate::Device,
+        surface: &crate::Surface,
+        window_size: (u32, u32),
+    ) -> Result<()> {
+        let new_swapchain = Self::create_swapchain(device, surface, window_size, Some(**self))?;
+        self.destroy(device);
+        *self = new_swapchain;
+        return Ok(());
+    }
+
+    pub fn destroy(&self, device: &crate::Device) {
+        device.assert_not_destroyed();
+        unsafe {
+            self.device.destroy_swapchain(**self, None);
+        }
+    }
+
+    fn create_swapchain(
+        device: &crate::Device,
+        surface: &crate::Surface,
+        window_size: (u32, u32),
+        old_swapchain: Option<vk::SwapchainKHR>,
+    ) -> Result<Self> {
         #[cfg(feature = "log")]
         soh_log::log_debug!("Creating swapchain for window size {:?}", window_size);
 
@@ -76,6 +104,10 @@ impl Swapchain {
             }
         }
 
+        if let Some(old_swapchain) = old_swapchain {
+            create_info.old_swapchain = old_swapchain;
+        }
+
         let create_info = create_info
             .pre_transform(swapchain_support.capabilities.current_transform)
             .composite_alpha(vk::CompositeAlphaFlagsKHR::OPAQUE)
@@ -90,13 +122,6 @@ impl Swapchain {
             image_format: surface_format.format,
             extent,
         });
-    }
-
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
-        unsafe {
-            self.device.destroy_swapchain(**self, None);
-        }
     }
 }
 
