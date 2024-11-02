@@ -15,12 +15,15 @@ soh_thread = { workspace = true, optional = true }
 
 [features]
 default = [ ]
+
 math = [ "dep:soh_math" ]
 rng = [ "dep:soh_rng" ]
 log = [ "dep:soh_log", "soh_vk?/log", "soh_ui?/log", "soh_thread?/log" ]
 vk = [ "dep:soh_vk", "math" ]
 ui = [ "dep:soh_ui", "vk" ]
 thread = [ "dep:soh_thread" ]
+
+serde = [ "soh_math?/serde" ]
 
 #==============================================================================
 # Workspace config
@@ -51,6 +54,7 @@ soh_thread = { path = "./soh_thread" }
 anyhow = ">=1.0,<2.0"
 clap = { version = ">=4.0,<5.0", features = [ "derive" ] }
 serde = { version = ">=1.0,<2.0", features = [ "derive" ] }
+num-traits = "<1.0"
 
 ash = { version = "<1.0", features = [ "linked" ] }
 sdl2 = "<1.0"

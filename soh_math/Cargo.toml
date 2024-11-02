@@ -4,6 +4,12 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
+macros = { path = "./macros" }
+serde = { workspace = true, optional = true }
+num-traits = { workspace = true }
+
+[features]
+serde = [ "dep:serde" ]
 
 [lints]
 workspace = true
