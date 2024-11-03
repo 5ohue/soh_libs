@@ -39,6 +39,14 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         quote! { Ord },
     ];
 
+    let num_of_fields = field.len();
+    let indexes = (0..num_of_fields)
+        .map(|idx| syn::Index::from(idx))
+        .collect::<Vec<_>>();
+    let float_types = (0..num_of_fields)
+        .map(|_| float_type.clone())
+        .collect::<Vec<_>>();
+
     let a = quote! {
         #[cfg(feature = "serde")]
         use serde::{Serialize, Deserialize};
@@ -53,27 +61,35 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #float_type: num_traits::Float,
         {
             // Math functions
+
+            /// Calculate the squared length of the vector (faster than [Self::length])
             pub fn length2(&self) -> #float_type {
                 return #(self.#field.powi(2))+*;
             }
 
+            /// Calculate the length of the vector ( for comparisons prefer using [Self::length2] )
             pub fn length(&self) -> #float_type {
                 return self.length2().sqrt();
             }
 
+            /// Calculate and return a normalized version of `self`
             pub fn normalized(&self) -> Self {
                 return *self / self.length();
             }
 
+            /// Make the length of vector 1.0
             pub fn normalize(&mut self) {
                 *self /= self.length();
             }
 
+            /// Calculate the dot product of two vectors
             pub fn dot(vec1: &Self, vec2: &Self) -> #float_type {
                 return #(vec1.#field * vec2.#field)+*;
             }
 
             // Common functions
+
+            /// Apply a mapping functor to coordinates to create a new vector
             pub fn map<Func, U>(&self, mut f: Func) -> #struct_name<U>
             where
                 U: num_traits::Float,
@@ -84,6 +100,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 };
             }
 
+            /// Apply a functor on the vector, changing it's coordinates
             pub fn transform<Func>(&mut self, mut f: Func)
             where
                 Func: FnMut(&mut #float_type),
@@ -202,6 +219,50 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #(let #field = iter.next().unwrap_or_default();)*
 
                 return #struct_name { #(#field, )* };
+            }
+        }
+
+        impl<#float_type> From<[#float_type; #num_of_fields]> for #struct_name<#float_type>
+        where
+            #float_type: Copy,
+        {
+            fn from(value: [#float_type; #num_of_fields]) -> Self {
+                return #struct_name {
+                    #(#field: value[#indexes],)*
+                };
+            }
+        }
+
+        impl<#float_type> From<#struct_name<#float_type>> for [#float_type; #num_of_fields]
+        where
+            #float_type: Copy,
+        {
+            fn from(value: #struct_name<#float_type>) -> Self {
+                return [
+                    #(value.#field),*
+                ];
+            }
+        }
+
+        impl<#float_type> From<( #(#float_types),* )> for #struct_name<#float_type>
+        where
+            #float_type: Copy,
+        {
+            fn from(value: ( #(#float_types),* )) -> Self {
+                return #struct_name {
+                    #(#field: value.#indexes,)*
+                };
+            }
+        }
+
+        impl<#float_type> From<#struct_name<#float_type>> for ( #(#float_types),* )
+        where
+            #float_type: Copy,
+        {
+            fn from(value: #struct_name<#float_type>) -> Self {
+                return (
+                    #(value.#field),*
+                );
             }
         }
     };
