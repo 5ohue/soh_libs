@@ -42,12 +42,17 @@ where
         return Mat2([factor, F::zero(), F::zero(), factor]);
     }
 
-    // Get matrix determinant
+    /// Get matrix determinant
     pub fn det(&self) -> F {
         return self.0[0] * self.0[3] - self.0[1] * self.0[2];
     }
 
-    // Get an inverse of the `self`
+    /// Get the transposed matrix
+    pub fn t(&self) -> Self {
+        return Mat2([self.0[0], self.0[2], self.0[1], self.0[3]]);
+    }
+
+    /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
         return Mat2([self.0[3], -self.0[1], -self.0[2], self.0[0]]) / self.det();
     }

@@ -322,6 +322,7 @@ dependencies = [
  "macros",
  "num-traits",
  "serde",
+ "soh_rng",
 ]
 
 [[package]]
