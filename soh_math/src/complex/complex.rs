@@ -14,36 +14,76 @@ pub struct Complex<T> {
 }
 
 //-----------------------------------------------------------------------------
-
-impl<T> Complex<T> {
+// Constructors
+impl<T> Complex<T>
+where
+    T: Float,
+{
     pub fn new(real: T, imaginary: T) -> Self {
         return Self {
             re: real,
             im: imaginary,
         };
     }
+
+    /// Complex number which equals to one
+    pub fn one() -> Self {
+        return T::one().into();
+    }
+
+    /// Complex number which equals to zero
+    pub fn zero() -> Self {
+        return T::zero().into();
+    }
+
+    /// Create a complex number from angle with unit length
+    pub fn from_angle(angle: T) -> Self {
+        return Complex {
+            re: angle.cos(),
+            im: angle.sin(),
+        };
+    }
+
+    /// Create a complex number from length and angle
+    pub fn from_param(length: T, angle: T) -> Self {
+        return Complex {
+            re: length * angle.cos(),
+            im: length * angle.sin(),
+        };
+    }
 }
 
+// Math functions
 impl<T> Complex<T>
 where
     T: Float + From<f64>,
 {
-    pub fn one() -> Self {
-        return Self::new(T::one(), T::zero());
+    /// Real part
+    pub fn real(&self) -> T {
+        return self.re;
     }
 
+    /// Imaginary part
+    pub fn imag(&self) -> T {
+        return self.im;
+    }
+
+    /// Get the angle of the complex number
     pub fn phi(&self) -> T {
         return self.im.atan2(self.re);
     }
 
+    /// Calculate the squared length
     pub fn len2(&self) -> T {
         return self.re * self.re + self.im * self.im;
     }
 
+    /// Calculate the length (absolute value)
     pub fn len(&self) -> T {
-        return self.len2().sqrt();
+        return T::hypot(self.re, self.im);
     }
 
+    /// Calculate the natural logarithm
     pub fn ln(&self) -> Self {
         return Complex {
             re: (self.len2()).ln() * 0.5.into(),
@@ -51,17 +91,11 @@ where
         };
     }
 
+    /// Get the conjugate
     pub fn conjugate(&self) -> Self {
         return Complex {
             re: self.re,
             im: -self.im,
-        };
-    }
-
-    pub fn from_param(length: T, angle: T) -> Self {
-        return Complex {
-            re: length * angle.cos(),
-            im: length * angle.sin(),
         };
     }
 }
@@ -167,6 +201,20 @@ where
         return Complex {
             re: -self.re,
             im: -self.im,
+        };
+    }
+}
+
+//-----------------------------------------------------------------------------
+// From implementations
+impl<T> From<T> for Complex<T>
+where
+    T: Float,
+{
+    fn from(value: T) -> Self {
+        return Complex {
+            re: value,
+            im: T::zero(),
         };
     }
 }

@@ -47,6 +47,21 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         .map(|_| float_type.clone())
         .collect::<Vec<_>>();
 
+    // Use hypot for 2D length
+    let len_impl = if num_of_fields == 2 {
+        quote! {
+            pub fn len(&self) -> #float_type {
+                return #float_type::hypot(self.x, self.y);
+            }
+        }
+    } else {
+        quote! {
+            pub fn len(&self) -> #float_type {
+                return self.len2().sqrt();
+            }
+        }
+    };
+
     let a = quote! {
         #[cfg(feature = "serde")]
         use serde::{Serialize, Deserialize};
@@ -68,9 +83,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
 
             /// Calculate the len of the vector ( for comparisons prefer using [Self::len2] )
-            pub fn len(&self) -> #float_type {
-                return self.len2().sqrt();
-            }
+            #len_impl
 
             /// Calculate and return a normalized version of `self`
             pub fn normalized(&self) -> Self {

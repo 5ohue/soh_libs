@@ -1,11 +1,11 @@
 //-----------------------------------------------------------------------------
+pub mod complex;
+pub mod mat;
 pub mod traits;
 pub mod vec;
-pub mod mat;
-pub mod complex;
 //-----------------------------------------------------------------------------
+pub use complex::*;
+pub use mat::*;
 pub use traits::*;
 pub use vec::*;
-pub use mat::*;
-pub use complex::*;
 //-----------------------------------------------------------------------------
