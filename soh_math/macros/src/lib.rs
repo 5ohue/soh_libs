@@ -7,7 +7,7 @@ use quote::quote;
 /// - Derive macros ( Debug, Copy, etc... )
 /// - Operator overloads ( add, sub, mul, div )
 /// - Convert trait
-/// - Some simple math ( dot product, length )
+/// - Some simple math ( dot product, len )
 #[proc_macro_attribute]
 pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse input
@@ -62,24 +62,24 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         {
             // Math functions
 
-            /// Calculate the squared length of the vector (faster than [Self::length])
-            pub fn length2(&self) -> #float_type {
+            /// Calculate the squared len of the vector (faster than [Self::len])
+            pub fn len2(&self) -> #float_type {
                 return #(self.#field.powi(2))+*;
             }
 
-            /// Calculate the length of the vector ( for comparisons prefer using [Self::length2] )
-            pub fn length(&self) -> #float_type {
-                return self.length2().sqrt();
+            /// Calculate the len of the vector ( for comparisons prefer using [Self::len2] )
+            pub fn len(&self) -> #float_type {
+                return self.len2().sqrt();
             }
 
             /// Calculate and return a normalized version of `self`
             pub fn normalized(&self) -> Self {
-                return *self / self.length();
+                return *self / self.len();
             }
 
-            /// Make the length of vector 1.0
+            /// Make the len of vector 1.0
             pub fn normalize(&mut self) {
-                *self /= self.length();
+                *self /= self.len();
             }
 
             /// Calculate the dot product of two vectors
