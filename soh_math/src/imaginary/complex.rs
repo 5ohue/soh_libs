@@ -123,8 +123,8 @@ where
             return pow.into();
         }
 
-        let exp: T = pow * self.ln_len();
-        return Complex::from_param(exp.exp(), pow * self.phi());
+        let res_ln_len = pow * self.ln_len();
+        return Complex::from_param(res_ln_len.exp(), pow * self.phi());
     }
 
     /// Calculate the complex power
@@ -133,8 +133,8 @@ where
             return pow;
         }
 
-        let exp = pow * Complex::new(self.ln_len(), self.phi());
-        return Complex::from_param(exp.re.exp(), exp.im);
+        let c = pow * Complex::new(self.ln_len(), self.phi());
+        return Complex::from_param(c.re.exp(), c.im);
     }
 
     /// Get the conjugate

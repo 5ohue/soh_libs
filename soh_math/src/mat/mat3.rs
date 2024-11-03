@@ -18,7 +18,7 @@ where
     F: Float,
 {
     /// Construct a matrix:
-    /// ```
+    /// ```notrust
     /// | a b c |
     /// | d e f |
     /// | g h i |
