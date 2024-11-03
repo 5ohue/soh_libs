@@ -56,17 +56,17 @@ mod tests {
         let identity = Mat3::<f64>::identity();
         assert_eq!(identity * identity, identity);
 
-        let m1 = Mat3::new(0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0);
-        let m2 = Mat3::new(3.0, 1.0, 4.0, 1.0, 5.0, 9.0, 2.0, 6.0, 5.0);
+        let m1 = Mat3::new([0.0, 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0]);
+        let m2 = Mat3::new([3.0, 1.0, 4.0, 1.0, 5.0, 9.0, 2.0, 6.0, 5.0]);
 
         assert_eq!(
             m1 * m2,
-            Mat3::new(5.0, 17.0, 19.0, 23.0, 53.0, 73.0, 41.0, 89.0, 127.0)
+            Mat3::new([5.0, 17.0, 19.0, 23.0, 53.0, 73.0, 41.0, 89.0, 127.0])
         );
 
         let mut rng = soh_rng::RNG64::new(0xdeadbeef);
         for _ in 0..100_000 {
-            let mat = Mat3::new(
+            let mat = Mat3::new([
                 rng.gen_range::<f64>(-1.0, 1.0),
                 rng.gen_range::<f64>(-1.0, 1.0),
                 rng.gen_range::<f64>(-1.0, 1.0),
@@ -76,7 +76,7 @@ mod tests {
                 rng.gen_range::<f64>(-1.0, 1.0),
                 rng.gen_range::<f64>(-1.0, 1.0),
                 rng.gen_range::<f64>(-1.0, 1.0),
-            );
+            ]);
 
             // Be careful here
             if mat.det().abs() < 1.0e-10 {

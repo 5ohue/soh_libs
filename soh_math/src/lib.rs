@@ -1,10 +1,10 @@
 //-----------------------------------------------------------------------------
-pub mod complex;
+pub mod imaginary;
 pub mod mat;
 pub mod traits;
 pub mod vec;
 //-----------------------------------------------------------------------------
-pub use complex::*;
+pub use imaginary::*;
 pub use mat::*;
 pub use traits::*;
 pub use vec::*;

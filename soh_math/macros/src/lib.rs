@@ -40,9 +40,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
     ];
 
     let num_of_fields = field.len();
-    let indexes = (0..num_of_fields)
-        .map(|idx| syn::Index::from(idx))
-        .collect::<Vec<_>>();
+    let indexes = (0..num_of_fields).map(syn::Index::from).collect::<Vec<_>>();
     let float_types = (0..num_of_fields)
         .map(|_| float_type.clone())
         .collect::<Vec<_>>();
@@ -280,7 +278,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         }
     };
 
-    return TokenStream::from(a);
+    TokenStream::from(a)
 }
 
 //-----------------------------------------------------------------------------

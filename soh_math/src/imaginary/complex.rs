@@ -86,9 +86,55 @@ where
     /// Calculate the natural logarithm
     pub fn ln(&self) -> Self {
         return Complex {
-            re: (self.len2()).ln() * 0.5.into(),
+            re: self.ln_len(),
             im: self.phi(),
         };
+    }
+
+    /// Calculate the natural logarithm of the length
+    pub fn ln_len(&self) -> T {
+        return (self.len2()).ln() * 0.5.into();
+    }
+
+    /// Calculate the integer power of the number
+    pub fn powi(&self, pow: u32) -> Self {
+        let mut result: Complex<T> = Complex::one();
+        let mut k: u32 = pow;
+        let mut a: Complex<T> = *self;
+
+        loop {
+            let n = k / 2;
+            if 2 * n < k {
+                result = result * a;
+            }
+            k = n;
+            a = a * a;
+            if k == 0 {
+                break;
+            }
+        }
+
+        return result;
+    }
+
+    /// Calculate the float power of the number
+    pub fn powf(&self, pow: T) -> Self {
+        if *self == Complex::zero() {
+            return pow.into();
+        }
+
+        let exp: T = pow * self.ln_len();
+        return Complex::from_param(exp.exp(), pow * self.phi());
+    }
+
+    /// Calculate the complex power
+    pub fn powc(&self, pow: Self) -> Self {
+        if *self == Complex::zero() {
+            return pow;
+        }
+
+        let exp = pow * Complex::new(self.ln_len(), self.phi());
+        return Complex::from_param(exp.re.exp(), exp.im);
     }
 
     /// Get the conjugate
