@@ -18,8 +18,10 @@ where
     F: Float,
 {
     /// Construct a matrix:
+    /// ```
     /// | a b |
     /// | c d |
+    /// ```
     pub fn new(a: F, b: F, c: F, d: F) -> Self {
         return Mat2([a, b, c, d]);
     }

@@ -18,9 +18,11 @@ where
     F: Float,
 {
     /// Construct a matrix:
+    /// ```
     /// | a b c |
     /// | d e f |
     /// | g h i |
+    /// ```
     pub fn new(a: F, b: F, c: F, d: F, e: F, f: F, g: F, h: F, i: F) -> Self {
         return Mat3([a, b, c, d, e, f, g, h, i]);
     }
