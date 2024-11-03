@@ -2,6 +2,9 @@
 //! Collection of different libraries
 //-----------------------------------------------------------------------------
 
+#[cfg(feature = "math")]
+pub use soh_math as math;
+
 #[cfg(feature = "rng")]
 pub use soh_rng as rng;
 
