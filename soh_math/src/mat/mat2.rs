@@ -5,47 +5,53 @@ use num_traits::Float;
 #[cfg(feature = "serde")]
 use serde::{Deserialize, Serialize};
 //-----------------------------------------------------------------------------
-
+/// 2x2 matrix ( column major )
 #[repr(C)]
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
-pub struct Mat2<F>(pub [F; 4]);
+pub struct Mat2<T>(pub [T; 4]);
 
 //-----------------------------------------------------------------------------
 
-impl<F> Mat2<F>
+impl<T> Mat2<T>
 where
-    F: Float + std::iter::Sum,
+    T: Float + std::iter::Sum,
 {
-    /// Construct a matrix:
-    /// ```notrust
-    /// | a b |
-    /// | c d |
-    /// ```
-    pub fn new(a: F, b: F, c: F, d: F) -> Self {
-        return Mat2([a, b, c, d]);
+    /// Construct a matrix from values ( column major )
+    pub fn new(m: [T; 4]) -> Self {
+        return Mat2(m);
+    }
+
+    /// Construct a matrix from rows
+    pub fn from_rows(rows: [[T; 2]; 2]) -> Self {
+        return Mat2([rows[0][0], rows[1][0], rows[0][1], rows[1][1]]);
+    }
+
+    /// Construct a matrix from columns
+    pub fn from_cols(cols: [[T; 2]; 2]) -> Self {
+        return Mat2([cols[0][0], cols[0][1], cols[1][0], cols[1][1]]);
     }
 
     /// Get the identity matrix
     pub fn identity() -> Self {
-        return Mat2([F::one(), F::zero(), F::zero(), F::one()]);
+        return Mat2([T::one(), T::zero(), T::zero(), T::one()]);
     }
 
     /// Construct a rotation matrix for angle `phi`
-    pub fn rot(phi: F) -> Self {
+    pub fn rot(phi: T) -> Self {
         let cos_phi = phi.cos();
         let sin_phi = phi.sin();
 
-        return Mat2([cos_phi, -sin_phi, sin_phi, cos_phi]);
+        return Mat2([cos_phi, sin_phi, -sin_phi, cos_phi]);
     }
 
     /// Construct a scaling matrix
-    pub fn scale(factor: F) -> Self {
-        return Mat2([factor, F::zero(), F::zero(), factor]);
+    pub fn scale(factor: T) -> Self {
+        return Mat2([factor, T::zero(), T::zero(), factor]);
     }
 
     /// Get matrix determinant
-    pub fn det(&self) -> F {
+    pub fn det(&self) -> T {
         return self.0[0] * self.0[3] - self.0[1] * self.0[2];
     }
 
@@ -60,16 +66,16 @@ where
     }
 
     /// Get the norm
-    pub fn norm(&self) -> F {
-        return self.0.iter().map(|&x| x * x).sum::<F>().sqrt();
+    pub fn norm(&self) -> T {
+        return self.0.iter().map(|&x| x * x).sum::<T>().sqrt();
     }
 }
 
 //-----------------------------------------------------------------------------
 // Operator overloads
-impl<F> std::ops::Add for Mat2<F>
+impl<T> std::ops::Add for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
     type Output = Self;
 
@@ -83,9 +89,9 @@ where
     }
 }
 
-impl<F> std::ops::Sub for Mat2<F>
+impl<T> std::ops::Sub for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
     type Output = Self;
 
@@ -99,13 +105,13 @@ where
     }
 }
 
-impl<F> std::ops::Mul<F> for Mat2<F>
+impl<T> std::ops::Mul<T> for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
     type Output = Self;
 
-    fn mul(self, rhs: F) -> Self::Output {
+    fn mul(self, rhs: T) -> Self::Output {
         return Mat2([
             self.0[0] * rhs,
             self.0[1] * rhs,
@@ -115,43 +121,43 @@ where
     }
 }
 
-impl<F> std::ops::Mul<Vec2<F>> for Mat2<F>
+impl<T> std::ops::Mul<Vec2<T>> for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
-    type Output = Vec2<F>;
+    type Output = Vec2<T>;
 
-    fn mul(self, rhs: Vec2<F>) -> Self::Output {
+    fn mul(self, rhs: Vec2<T>) -> Self::Output {
         return Vec2 {
-            x: self.0[0] * rhs.x + self.0[1] * rhs.y,
-            y: self.0[2] * rhs.x + self.0[3] * rhs.y,
+            x: self.0[0] * rhs.x + self.0[2] * rhs.y,
+            y: self.0[1] * rhs.x + self.0[3] * rhs.y,
         };
     }
 }
 
-impl<F> std::ops::Mul for Mat2<F>
+impl<T> std::ops::Mul for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
         return Mat2([
-            self.0[0] * rhs.0[0] + self.0[1] * rhs.0[2],
-            self.0[0] * rhs.0[1] + self.0[1] * rhs.0[3],
-            self.0[2] * rhs.0[0] + self.0[3] * rhs.0[2],
-            self.0[2] * rhs.0[1] + self.0[3] * rhs.0[3],
+            self.0[0] * rhs.0[0] + self.0[2] * rhs.0[1],
+            self.0[1] * rhs.0[0] + self.0[3] * rhs.0[1],
+            self.0[0] * rhs.0[2] + self.0[2] * rhs.0[3],
+            self.0[1] * rhs.0[2] + self.0[3] * rhs.0[3],
         ]);
     }
 }
 
-impl<F> std::ops::Div<F> for Mat2<F>
+impl<T> std::ops::Div<T> for Mat2<T>
 where
-    F: Float,
+    T: Float,
 {
     type Output = Self;
 
-    fn div(self, rhs: F) -> Self::Output {
+    fn div(self, rhs: T) -> Self::Output {
         return Mat2([
             self.0[0] / rhs,
             self.0[1] / rhs,
@@ -163,8 +169,8 @@ where
 
 //-----------------------------------------------------------------------------
 // Other
-impl<F> AsRef<[F]> for Mat2<F> {
-    fn as_ref(&self) -> &[F] {
+impl<T> AsRef<[T]> for Mat2<T> {
+    fn as_ref(&self) -> &[T] {
         return &self.0;
     }
 }

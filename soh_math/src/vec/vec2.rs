@@ -4,18 +4,18 @@ use num_traits::Float;
 //-----------------------------------------------------------------------------
 #[repr(C)]
 #[impl_vec]
-pub struct Vec2<F> {
-    pub x: F,
-    pub y: F,
+pub struct Vec2<T> {
+    pub x: T,
+    pub y: T,
 }
 
 //-----------------------------------------------------------------------------
 // Math functions
-impl<F> Vec2<F>
+impl<T> Vec2<T>
 where
-    F: Float,
+    T: Float,
 {
-    pub fn cross(vec1: &Self, vec2: &Self) -> F {
+    pub fn cross(vec1: &Self, vec2: &Self) -> T {
         return vec1.x * vec2.y - vec1.y * vec2.x;
     }
 }

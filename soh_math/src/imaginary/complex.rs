@@ -56,7 +56,7 @@ where
 // Math functions
 impl<T> Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float + From<f32>,
 {
     /// Real part
     pub fn real(&self) -> T {
@@ -150,7 +150,7 @@ where
 // Operator overloads
 impl<T> std::ops::Add for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -164,7 +164,7 @@ where
 
 impl<T> std::ops::Sub for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -178,7 +178,7 @@ where
 
 impl<T> std::ops::Mul for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -192,7 +192,7 @@ where
 
 impl<T> std::ops::Mul<T> for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -206,7 +206,7 @@ where
 
 impl<T> std::ops::Div for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -225,7 +225,7 @@ where
 
 impl<T> std::ops::Div<T> for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
@@ -239,7 +239,7 @@ where
 
 impl<T> std::ops::Neg for Complex<T>
 where
-    T: Float + From<f64>,
+    T: Float,
 {
     type Output = Self;
 
