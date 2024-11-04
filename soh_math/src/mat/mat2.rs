@@ -15,7 +15,7 @@ pub struct Mat2<F>(pub [F; 4]);
 
 impl<F> Mat2<F>
 where
-    F: Float,
+    F: Float + std::iter::Sum,
 {
     /// Construct a matrix:
     /// ```notrust
@@ -57,6 +57,11 @@ where
     /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
         return Mat2([self.0[3], -self.0[1], -self.0[2], self.0[0]]) / self.det();
+    }
+
+    /// Get the norm
+    pub fn norm(&self) -> F {
+        return self.0.iter().map(|&x| x * x).sum::<F>().sqrt();
     }
 }
 

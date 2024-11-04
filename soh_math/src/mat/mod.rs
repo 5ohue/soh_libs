@@ -47,7 +47,7 @@ mod tests {
             }
 
             let mm = mat * mat.invert() - identity;
-            assert!(mm.det().abs() < 1.0e-20);
+            assert!(mm.norm() < 1.0e-10);
         }
     }
 
@@ -84,7 +84,27 @@ mod tests {
             }
 
             let mm = mat * mat.invert() - identity;
-            assert!(mm.det().abs() < 1.0e-20);
+            assert!(mm.norm() < 1.0e-10);
+        }
+
+        // Test rotation matrixes
+        for _ in 0..100_000 {
+            let yaw = rng.gen_to::<f64>(std::f64::consts::TAU);
+            let pitch = rng.gen_to::<f64>(std::f64::consts::TAU);
+            let roll = rng.gen_to::<f64>(std::f64::consts::TAU);
+
+            let m_yaw = Mat3::yaw(yaw);
+            let m_pitch = Mat3::pitch(pitch);
+            let m_roll = Mat3::roll(roll);
+
+            let m_yaw_pitch_roll = Mat3::yaw_pitch_roll(yaw, pitch, roll);
+
+            let (yaw2, pitch2, roll2) = m_yaw_pitch_roll.get_euler_angles();
+            let m_yaw_pitch_roll2 = Mat3::yaw_pitch_roll(yaw2, pitch2, roll2);
+
+            assert!((m_yaw_pitch_roll - m_yaw_pitch_roll2).norm() < 1.0e-3);
+
+            assert!((m_yaw * m_pitch * m_roll - m_yaw_pitch_roll).norm() < 1.0e-10);
         }
     }
 }

@@ -15,6 +15,7 @@ soh_thread = { workspace = true, optional = true }
 
 [features]
 default = [ ]
+all = [ "math", "rng", "log", "vk", "ui", "thread" ]
 
 math = [ "dep:soh_math" ]
 rng = [ "dep:soh_rng" ]

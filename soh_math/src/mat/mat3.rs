@@ -15,7 +15,7 @@ pub struct Mat3<F>(pub [F; 9]);
 
 impl<F> Mat3<F>
 where
-    F: Float,
+    F: Float + std::iter::Sum + From<f32>,
 {
     /// Construct a matrix:
     /// ```notrust
@@ -40,6 +40,108 @@ where
             F::zero(),
             F::one(),
         ]);
+    }
+
+    /// Get a rotation matrix for yaw `phi`
+    /// ( Rotation around the z-axis )
+    pub fn yaw(phi: F) -> Self {
+        let phi_cos = phi.cos();
+        let phi_sin = phi.sin();
+
+        return Mat3([
+            phi_cos,
+            -phi_sin,
+            F::zero(),
+            phi_sin,
+            phi_cos,
+            F::zero(),
+            F::zero(),
+            F::zero(),
+            F::one(),
+        ]);
+    }
+
+    /// Get a rotation matrix for pitch `theta`
+    /// ( Rotation around the y-axis )
+    pub fn pitch(theta: F) -> Self {
+        let theta_cos = theta.cos();
+        let theta_sin = theta.sin();
+
+        return Mat3([
+            theta_cos,
+            F::zero(),
+            theta_sin,
+            F::zero(),
+            F::one(),
+            F::zero(),
+            -theta_sin,
+            F::zero(),
+            theta_cos,
+        ]);
+    }
+
+    /// Get a rotation matrix for roll `psi`
+    /// ( Rotation around the x-axis )
+    pub fn roll(psi: F) -> Self {
+        let psi_cos = psi.cos();
+        let psi_sin = psi.sin();
+
+        return Mat3([
+            F::one(),
+            F::zero(),
+            F::zero(),
+            F::zero(),
+            psi_cos,
+            -psi_sin,
+            F::zero(),
+            psi_sin,
+            psi_cos,
+        ]);
+    }
+
+    /// Get a rotation matrix for euler angles yaw pitch and roll.
+    /// Identical to multiplying yaw * pitch * roll matrices separately
+    /// ( First rotating around x-axis, then rotating around y-axis and finally around z-axis )
+    pub fn yaw_pitch_roll(yaw: F, pitch: F, roll: F) -> Self {
+        let yaw_cos = yaw.cos();
+        let yaw_sin = yaw.sin();
+        let pitch_cos = pitch.cos();
+        let pitch_sin = pitch.sin();
+        let roll_cos = roll.cos();
+        let roll_sin = roll.sin();
+
+        return Mat3([
+            yaw_cos * pitch_cos,
+            yaw_cos * pitch_sin * roll_sin - yaw_sin * roll_cos,
+            yaw_cos * pitch_sin * roll_cos + yaw_sin * roll_sin,
+            yaw_sin * pitch_cos,
+            yaw_sin * pitch_sin * roll_sin + yaw_cos * roll_cos,
+            yaw_sin * pitch_sin * roll_cos - yaw_cos * roll_sin,
+            -pitch_sin,
+            pitch_cos * roll_sin,
+            pitch_cos * roll_cos,
+        ]);
+    }
+
+    /// Get euler angles ( yaw, pitch, roll )
+    pub fn get_euler_angles(&self) -> (F, F, F) {
+        let sy = F::sqrt(self.0[0].powi(2) + self.0[3].powi(2));
+
+        let singular = sy < 1.0e-6.into();
+
+        if !singular {
+            return (
+                F::atan2(self.0[3], self.0[0]),
+                F::atan2(-self.0[6], sy),
+                F::atan2(self.0[7], self.0[8]),
+            );
+        } else {
+            return (
+                F::zero(),
+                F::atan2(-self.0[6], sy),
+                F::atan2(-self.0[5], self.0[4]),
+            );
+        }
     }
 
     /// Construct a scaling matrix
@@ -89,6 +191,11 @@ where
             (self.0[1] * self.0[6] - self.0[0] * self.0[7]),
             (self.0[0] * self.0[4] - self.0[1] * self.0[3]),
         ]) / self.det();
+    }
+
+    /// Get the norm
+    pub fn norm(&self) -> F {
+        return self.0.iter().map(|&x| x * x).sum::<F>().sqrt();
     }
 }
 
