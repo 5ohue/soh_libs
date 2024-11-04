@@ -122,12 +122,15 @@ where
         let roll_sin = roll.sin();
 
         return Mat3([
+            // First column
             yaw_cos * pitch_cos,
             yaw_sin * pitch_cos,
             -pitch_sin,
+            // Second column
             yaw_cos * pitch_sin * roll_sin - yaw_sin * roll_cos,
             yaw_sin * pitch_sin * roll_sin + yaw_cos * roll_cos,
             pitch_cos * roll_sin,
+            // Third column
             yaw_cos * pitch_sin * roll_cos + yaw_sin * roll_sin,
             yaw_sin * pitch_sin * roll_cos - yaw_cos * roll_sin,
             pitch_cos * roll_cos,
@@ -150,6 +153,9 @@ where
     }
 
     /// Get the element at row `row` and column `col`
+    ///
+    /// source:
+    /// [https://learnopencv.com/rotation-matrix-to-euler-angles/]
     #[inline(always)]
     pub fn at(&self, row: usize, col: usize) -> T {
         return self.0[col * 3 + row];
@@ -157,7 +163,7 @@ where
 
     /// Get euler angles ( yaw, pitch, roll )
     pub fn get_euler_angles(&self) -> (T, T, T) {
-        let sy = T::sqrt(self.at(0, 0).powi(2) + self.at(1, 0).powi(2));
+        let sy = T::hypot(self.at(0, 0), self.at(1, 0));
 
         let singular = sy < 1.0e-6.into();
 
@@ -195,15 +201,15 @@ where
     /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
         return Mat3([
-            // First row
+            // First column
             (self.0[4] * self.0[8] - self.0[5] * self.0[7]),
             (self.0[2] * self.0[7] - self.0[1] * self.0[8]),
             (self.0[1] * self.0[5] - self.0[2] * self.0[4]),
-            // Second row
+            // Second column
             (self.0[5] * self.0[6] - self.0[3] * self.0[8]),
             (self.0[0] * self.0[8] - self.0[2] * self.0[6]),
             (self.0[2] * self.0[3] - self.0[0] * self.0[5]),
-            // Third row
+            // Third column
             (self.0[3] * self.0[7] - self.0[4] * self.0[6]),
             (self.0[1] * self.0[6] - self.0[0] * self.0[7]),
             (self.0[0] * self.0[4] - self.0[1] * self.0[3]),
@@ -304,15 +310,15 @@ where
 
     fn mul(self, rhs: Self) -> Self::Output {
         return Mat3([
-            // First row
+            // First column
             self.0[0] * rhs.0[0] + self.0[3] * rhs.0[1] + self.0[6] * rhs.0[2],
             self.0[1] * rhs.0[0] + self.0[4] * rhs.0[1] + self.0[7] * rhs.0[2],
             self.0[2] * rhs.0[0] + self.0[5] * rhs.0[1] + self.0[8] * rhs.0[2],
-            // Second row
+            // Second column
             self.0[0] * rhs.0[3] + self.0[3] * rhs.0[4] + self.0[6] * rhs.0[5],
             self.0[1] * rhs.0[3] + self.0[4] * rhs.0[4] + self.0[7] * rhs.0[5],
             self.0[2] * rhs.0[3] + self.0[5] * rhs.0[4] + self.0[8] * rhs.0[5],
-            // Third row
+            // Third column
             self.0[0] * rhs.0[6] + self.0[3] * rhs.0[7] + self.0[6] * rhs.0[8],
             self.0[1] * rhs.0[6] + self.0[4] * rhs.0[7] + self.0[7] * rhs.0[8],
             self.0[2] * rhs.0[6] + self.0[5] * rhs.0[7] + self.0[8] * rhs.0[8],

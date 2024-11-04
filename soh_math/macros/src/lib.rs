@@ -73,6 +73,12 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         where
             #float_type: num_traits::Float,
         {
+            pub fn new(#(#field: #float_type),*) -> Self {
+                return #struct_name {
+                    #(#field,)*
+                };
+            }
+
             // Math functions
 
             /// Calculate the squared len of the vector (faster than [Self::len])
