@@ -1,3 +1,4 @@
+// https://developer.samsung.com/galaxy-gamedev/resources/articles/renderpasses.html#Using-a-VkRenderPass
 use anyhow::Result;
 use ash::vk;
 
@@ -9,7 +10,11 @@ pub struct RenderPass {
 // Constructor, destructor
 impl RenderPass {
     pub fn new(device: &crate::Device, format: vk::Format) -> Result<Self> {
-        // Declare all of the attachments in the render pass
+        /*
+         * Declare all of the attachments in the render pass
+         * (attachment is a render target and corresponds to an image view in
+         * the framebuffer)
+         */
         let color_attachment = vk::AttachmentDescription::default()
             .format(format)
             .samples(vk::SampleCountFlags::TYPE_1)
@@ -20,19 +25,30 @@ impl RenderPass {
             .initial_layout(vk::ImageLayout::UNDEFINED)
             .final_layout(vk::ImageLayout::PRESENT_SRC_KHR);
 
-        // Declare all the references to the attachments
+        let color_attachments = &[color_attachment];
+
+        /*
+         * Declare all the references to the attachments
+         * (used by subpasses)
+         */
         let color_attachment_ref = vk::AttachmentReference::default()
             .attachment(0)
-            .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL);
+            .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL); // Layout DURING the subpass
 
         let color_attachment_refs = &[color_attachment_ref];
 
-        // Declare the subpasses
+        /*
+         * Declare the subpasses
+         */
         let subpass = vk::SubpassDescription::default()
             .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
             .color_attachments(color_attachment_refs);
 
-        // Dependencies
+        let subpasses = &[subpass];
+
+        /*
+         * Dependencies between subpasses
+         */
         let dependency = vk::SubpassDependency::default()
             .src_subpass(vk::SUBPASS_EXTERNAL)
             .dst_subpass(0)
@@ -41,11 +57,11 @@ impl RenderPass {
             .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
             .dst_access_mask(vk::AccessFlags::COLOR_ATTACHMENT_WRITE);
 
-        let color_attachments = &[color_attachment];
-        let subpasses = &[subpass];
         let dependencies = &[dependency];
 
-        // Create render pass
+        /*
+         * Create render pass
+         */
         let create_info = vk::RenderPassCreateInfo::default()
             .attachments(color_attachments)
             .subpasses(subpasses)

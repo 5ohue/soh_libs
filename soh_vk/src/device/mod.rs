@@ -3,7 +3,7 @@ pub mod physical;
 //-----------------------------------------------------------------------------
 
 use anyhow::Result;
-use ash::vk;
+use ash::vk::{self, Handle};
 
 pub struct Device {
     physical: physical::Device,
@@ -43,8 +43,7 @@ impl Device {
     pub fn new(instance: &crate::Instance, surface: &vk::SurfaceKHR) -> Result<Self> {
         let physical = physical::Device::new(instance, surface)?;
 
-        // First collect into a set (to have unique set of indices) and then for each index create
-        // queue create info
+        // Make a `vkDeviceQueueCreateInfo` for each unique queue
         let queue_create_infos = physical
             .queue_family_indices()
             .get_unique_indices()
@@ -61,7 +60,8 @@ impl Device {
 
         let device_features = vk::PhysicalDeviceFeatures::default()
             .depth_clamp(true)
-            .wide_lines(true);
+            .fill_mode_non_solid(true) // For lines
+            .wide_lines(true); // For wide lines
 
         let create_info = vk::DeviceCreateInfo::default()
             .queue_create_infos(&queue_create_infos)
@@ -82,6 +82,7 @@ impl Device {
 
     pub fn destroy(&mut self, instance: &crate::Instance) {
         instance.assert_not_destroyed();
+
         self.is_destroyed = true;
         unsafe { self.logical.destroy_device(None) };
     }
@@ -122,6 +123,11 @@ impl std::ops::Deref for Device {
     type Target = ash::Device;
 
     fn deref(&self) -> &Self::Target {
+        assert!(
+            !self.logical.handle().is_null(),
+            "Trying to use a logical device which is VK_NULL_HANDLE"
+        );
+
         return &self.logical;
     }
 }

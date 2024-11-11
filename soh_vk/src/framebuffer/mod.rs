@@ -31,7 +31,8 @@ impl Framebuffer {
         device: &crate::Device,
         swapchain: &crate::Swapchain,
     ) -> Result<Self> {
-        let image_views = Self::create_image_views(device, swapchain)?;
+        let image_views =
+            Self::create_image_views(device, &swapchain.get_images()?, swapchain.image_format())?;
         let render_pass = RenderPass::new(device, swapchain.image_format())?;
 
         let extent = swapchain.extent();
@@ -90,19 +91,36 @@ impl Framebuffer {
 
 // Specific implementation
 impl Framebuffer {
+    pub fn get_viewport_scissor(&self) -> (vk::Viewport, vk::Rect2D) {
+        let viewport = vk::Viewport {
+            x: 0.0,
+            y: 0.0,
+            width: self.extent.width as f32,
+            height: self.extent.height as f32,
+            min_depth: 0.0,
+            max_depth: 1.0,
+        };
+
+        let scissor = vk::Rect2D {
+            offset: vk::Offset2D { x: 0, y: 0 },
+            extent: self.extent,
+        };
+
+        return (viewport, scissor);
+    }
+
     fn create_image_views(
         device: &crate::Device,
-        swapchain: &crate::Swapchain,
+        images: &[vk::Image],
+        format: vk::Format,
     ) -> Result<Vec<vk::ImageView>> {
-        let images = swapchain.get_images()?;
-
         let mut res = Vec::new();
 
         for &image in images.iter() {
             let create_info = vk::ImageViewCreateInfo::default()
                 .image(image)
                 .view_type(vk::ImageViewType::TYPE_2D)
-                .format(swapchain.image_format())
+                .format(format)
                 .components(vk::ComponentMapping {
                     r: vk::ComponentSwizzle::IDENTITY,
                     g: vk::ComponentSwizzle::IDENTITY,

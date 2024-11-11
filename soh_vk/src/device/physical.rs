@@ -1,5 +1,5 @@
 use anyhow::{anyhow, Result};
-use ash::vk;
+use ash::vk::{self, Handle};
 
 pub struct Device {
     physical_device: vk::PhysicalDevice,
@@ -67,6 +67,7 @@ impl Device {
             .iter()
             .enumerate()
             .filter(|(_idx, &device)| {
+                assert!(!device.is_null());
                 return Self::is_device_suitable(instance, device, surface);
             })
             .collect::<Vec<_>>();
@@ -89,8 +90,9 @@ impl Device {
         }
 
         let selected_device = suitable_devices[0];
-        let gpu_info = PhysicalDeviceInfo::get_info(instance, *selected_device.1, surface).unwrap(); // This shouldn't panic because this function was already called for this
-                                                                                                     // device before
+
+        // This shouldn't panic because this function was already called for this device before
+        let gpu_info = PhysicalDeviceInfo::get_info(instance, *selected_device.1, surface).unwrap();
 
         #[cfg(feature = "log")]
         {
@@ -199,6 +201,8 @@ impl PhysicalDeviceInfo {
         });
     }
 
+    /// Update the swapchain support info. This function only updates the capabilities
+    /// (which mainly updates the current extent)
     #[inline(always)]
     fn update_swapchain_support_info(
         &mut self,
@@ -206,8 +210,11 @@ impl PhysicalDeviceInfo {
         physical_device: vk::PhysicalDevice,
         surface: &vk::SurfaceKHR,
     ) -> Result<&SwapchainSupportInfo> {
-        self.swapchain_support =
-            Self::query_swapchain_support_info(instance, physical_device, surface)?;
+        let instance = instance.instance_surface();
+
+        self.swapchain_support.capabilities = unsafe {
+            instance.get_physical_device_surface_capabilities(physical_device, *surface)?
+        };
 
         return Ok(&self.swapchain_support);
     }

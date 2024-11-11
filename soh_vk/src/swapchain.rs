@@ -6,13 +6,13 @@ pub struct Swapchain {
 
     device: ash::khr::swapchain::Device,
 
-    image_format: vk::Format,
+    image_format: crate::Format,
     extent: vk::Extent2D,
 }
 
 // Getters
 impl Swapchain {
-    pub fn image_format(&self) -> vk::Format {
+    pub fn image_format(&self) -> crate::Format {
         return self.image_format;
     }
     pub fn extent(&self) -> vk::Extent2D {
