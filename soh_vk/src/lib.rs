@@ -43,3 +43,16 @@ pub mod command;
 pub mod sync;
 
 //-----------------------------------------------------------------------------
+// Helps to easily get a handle from a Option<&WrapperType>
+fn get_opt_handle<T, H>(opt: Option<&T>) -> H
+where
+    T: std::ops::Deref<Target = H>,
+    H: ash::vk::Handle + Copy,
+{
+    return match opt {
+        Some(obj) => **obj,
+        None => H::from_raw(0),
+    };
+}
+
+//-----------------------------------------------------------------------------

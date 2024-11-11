@@ -36,7 +36,7 @@ impl Swapchain {
         surface: &crate::Surface,
         window_size: (u32, u32),
     ) -> Result<()> {
-        let new_swapchain = Self::create_swapchain(device, surface, window_size, Some(**self))?;
+        let new_swapchain = Self::create_swapchain(device, surface, window_size, Some(self))?;
         self.destroy(device);
         *self = new_swapchain;
         return Ok(());
@@ -53,7 +53,7 @@ impl Swapchain {
         device: &crate::Device,
         surface: &crate::Surface,
         window_size: (u32, u32),
-        old_swapchain: Option<vk::SwapchainKHR>,
+        old_swapchain: Option<&Self>,
     ) -> Result<Self> {
         #[cfg(feature = "log")]
         soh_log::log_debug!("Creating swapchain for window size {:?}", window_size);
@@ -89,7 +89,8 @@ impl Swapchain {
             .image_extent(extent)
             .image_array_layers(1)
             .image_usage(vk::ImageUsageFlags::COLOR_ATTACHMENT)
-            .queue_family_indices(&queue_family_indices);
+            .queue_family_indices(&queue_family_indices)
+            .old_swapchain(crate::get_opt_handle(old_swapchain));
 
         if let &crate::physical::QueueFamilyIndices {
             graphics_family: Some(gf),
@@ -102,10 +103,6 @@ impl Swapchain {
             } else {
                 create_info.image_sharing_mode = vk::SharingMode::EXCLUSIVE;
             }
-        }
-
-        if let Some(old_swapchain) = old_swapchain {
-            create_info.old_swapchain = old_swapchain;
         }
 
         let create_info = create_info
@@ -132,17 +129,8 @@ impl Swapchain {
         signal_semaphore: Option<&crate::sync::Semaphore>,
         fence: Option<&crate::sync::Fence>,
     ) -> Result<(u32, bool), vk::Result> {
-        let semaphore = if let Some(s) = signal_semaphore {
-            **s
-        } else {
-            vk::Semaphore::null()
-        };
-
-        let fence = if let Some(f) = fence {
-            **f
-        } else {
-            vk::Fence::null()
-        };
+        let semaphore = crate::get_opt_handle(signal_semaphore);
+        let fence = crate::get_opt_handle(fence);
 
         return unsafe {
             self.device

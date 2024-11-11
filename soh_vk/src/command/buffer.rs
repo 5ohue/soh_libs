@@ -120,12 +120,18 @@ impl Buffer {
         return Ok(());
     }
 
+    /// Submit the command buffer to the queue
+    ///
+    /// * `device`: logical device the buffer was created with
+    /// * `wait_semaphore`: the semaphore to wait for signal
+    /// * `signal_semaphore`: the semaphore which should get signaled once the command is executed
+    /// * `fence`: the fence that should be signaled once the execution completes
     pub fn submit(
         &self,
         device: &crate::Device,
         wait_semaphore: &crate::sync::Semaphore,
         signal_semaphore: &crate::sync::Semaphore,
-        fence: &crate::sync::Fence,
+        fence: Option<&crate::sync::Fence>,
     ) -> Result<()> {
         let queue = device.get_queue(self.queue_family_index);
 
@@ -145,8 +151,10 @@ impl Buffer {
             .wait_dst_stage_mask(wait_stages)
             .command_buffers(command_buffers);
 
+        let fence = crate::get_opt_handle(fence);
+
         unsafe {
-            device.queue_submit(queue, &[submit_info], **fence)?;
+            device.queue_submit(queue, &[submit_info], fence)?;
         }
 
         return Ok(());
