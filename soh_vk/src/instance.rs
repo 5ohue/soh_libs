@@ -45,7 +45,8 @@ impl Instance {
 // Constructor, destructor
 impl Instance {
     pub fn new(app_info: &vk::ApplicationInfo, window: &sdl2::video::Window) -> Result<Instance> {
-        let entry = Entry::linked();
+        // TODO: make it more cross platform
+        let entry = unsafe { Entry::load_from("/usr/lib/libvulkan.so")? };
 
         let required_extensions = Self::get_sdl2_extensions(window)?;
         let required_layers = Self::get_validation_layers(&entry)?;

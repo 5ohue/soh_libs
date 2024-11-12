@@ -57,7 +57,7 @@ clap = { version = ">=4.0,<5.0", features = [ "derive" ] }
 serde = { version = ">=1.0,<2.0", features = [ "derive" ] }
 num-traits = "<1.0"
 
-ash = { version = "<1.0", features = [ "linked" ] }
+ash = "<1.0"
 sdl2 = "<1.0"
 ron = "<1.0"
 
