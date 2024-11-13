@@ -10,6 +10,7 @@ pub struct Device {
 #[derive(Debug)]
 pub struct PhysicalDeviceInfo {
     pub name: String,
+    pub memory_props: vk::PhysicalDeviceMemoryProperties,
 
     pub queue_family_indices: QueueFamilyIndices,
     pub swapchain_support: SwapchainSupportInfo,
@@ -109,6 +110,32 @@ impl Device {
             info: gpu_info,
         });
     }
+}
+
+// Specific implementation
+impl Device {
+    /// Find the index for the physical device memory type that supports the given properties
+    ///
+    /// * `type_filter`: the vk::MemoryRequirements::memory_type_bits field
+    /// * `properties`: the requested memory property flags
+    pub(crate) fn find_memory_type(
+        &self,
+        type_filter: u32,
+        properties: crate::MemoryPropertyFlags,
+    ) -> Option<u32> {
+        for i in 0..self.info.memory_props.memory_type_count {
+            let memory_type_supported = type_filter & (1 << i) != 0;
+            let properties_supported =
+                (self.info.memory_props.memory_types[i as usize].property_flags & properties)
+                    == properties;
+
+            if memory_type_supported && properties_supported {
+                return Some(i);
+            }
+        }
+
+        return None;
+    }
 
     #[inline(always)]
     pub fn update_swapchain_support_info(
@@ -182,7 +209,6 @@ impl Device {
     }
 }
 
-// Specific implementation
 impl PhysicalDeviceInfo {
     fn get_info(
         instance: &crate::Instance,
@@ -191,6 +217,7 @@ impl PhysicalDeviceInfo {
     ) -> Result<Self> {
         return Ok(PhysicalDeviceInfo {
             name: Self::query_gpu_name(instance, physical_device)?,
+            memory_props: Self::query_memory_properties(instance, physical_device),
 
             queue_family_indices: Self::find_queue_families(instance, physical_device, surface),
             swapchain_support: Self::query_swapchain_support_info(
@@ -229,6 +256,13 @@ impl PhysicalDeviceInfo {
             .device_name_as_c_str()?
             .to_string_lossy()
             .to_string());
+    }
+
+    fn query_memory_properties(
+        instance: &crate::Instance,
+        physical_device: vk::PhysicalDevice,
+    ) -> vk::PhysicalDeviceMemoryProperties {
+        return unsafe { instance.get_physical_device_memory_properties(physical_device) };
     }
 
     fn find_queue_families(
