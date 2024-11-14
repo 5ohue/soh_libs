@@ -26,8 +26,6 @@ impl RenderPass {
             .initial_layout(vk::ImageLayout::UNDEFINED)
             .final_layout(vk::ImageLayout::PRESENT_SRC_KHR);
 
-        let color_attachments = &[color_attachment];
-
         /*
          * Declare all the references to the attachments
          * (used by subpasses)
@@ -36,16 +34,12 @@ impl RenderPass {
             .attachment(0)
             .layout(vk::ImageLayout::COLOR_ATTACHMENT_OPTIMAL); // Layout DURING the subpass
 
-        let color_attachment_refs = &[color_attachment_ref];
-
         /*
          * Declare the subpasses
          */
         let subpass = vk::SubpassDescription::default()
             .pipeline_bind_point(vk::PipelineBindPoint::GRAPHICS)
-            .color_attachments(color_attachment_refs);
-
-        let subpasses = &[subpass];
+            .color_attachments(std::slice::from_ref(&color_attachment_ref));
 
         /*
          * Dependencies between subpasses
@@ -58,15 +52,13 @@ impl RenderPass {
             .dst_stage_mask(vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT)
             .dst_access_mask(vk::AccessFlags::COLOR_ATTACHMENT_WRITE);
 
-        let dependencies = &[dependency];
-
         /*
          * Create render pass
          */
         let create_info = vk::RenderPassCreateInfo::default()
-            .attachments(color_attachments)
-            .subpasses(subpasses)
-            .dependencies(dependencies);
+            .attachments(std::slice::from_ref(&color_attachment))
+            .subpasses(std::slice::from_ref(&subpass))
+            .dependencies(std::slice::from_ref(&dependency));
 
         let render_pass = unsafe { device.create_render_pass(&create_info, None)? };
 

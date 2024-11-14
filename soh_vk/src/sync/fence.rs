@@ -33,13 +33,21 @@ impl Fence {
 impl Fence {
     pub fn wait(&self) {
         unsafe {
-            let _ = self.device.wait_for_fences(&[self.fence], true, u64::MAX);
+            let _ = self
+                .device
+                .wait_for_fences(std::slice::from_ref(self), true, u64::MAX);
+        }
+    }
+
+    pub fn is_signaled(&self) -> bool {
+        unsafe {
+            return self.device.get_fence_status(self.fence).unwrap();
         }
     }
 
     pub fn reset(&self) {
         unsafe {
-            let _ = self.device.reset_fences(&[self.fence]);
+            let _ = self.device.reset_fences(std::slice::from_ref(self));
         }
     }
 }

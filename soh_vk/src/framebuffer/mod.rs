@@ -42,11 +42,9 @@ impl Framebuffer {
         let framebuffers = image_views
             .iter()
             .filter_map(|&image_view| {
-                let attachments = &[image_view];
-
                 let create_info = vk::FramebufferCreateInfo::default()
                     .render_pass(*render_pass)
-                    .attachments(attachments)
+                    .attachments(std::slice::from_ref(&image_view))
                     .width(extent.width)
                     .height(extent.height)
                     .layers(1);
@@ -79,12 +77,12 @@ impl Framebuffer {
         unsafe {
             self.render_pass.destroy();
 
-            for &image_view in self.image_views.iter() {
-                self.device.destroy_image_view(image_view, None);
-            }
-
             for &framebuffer in self.framebuffers.iter() {
                 self.device.destroy_framebuffer(framebuffer, None);
+            }
+
+            for &image_view in self.image_views.iter() {
+                self.device.destroy_image_view(image_view, None);
             }
         }
     }

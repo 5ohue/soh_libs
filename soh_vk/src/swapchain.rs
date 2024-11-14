@@ -8,6 +8,7 @@ pub struct Swapchain {
 
     image_format: crate::Format,
     extent: vk::Extent2D,
+    num_of_images: usize,
 }
 
 // Getters
@@ -17,6 +18,9 @@ impl Swapchain {
     }
     pub fn extent(&self) -> vk::Extent2D {
         return self.extent;
+    }
+    pub fn num_of_images(&self) -> usize {
+        return self.num_of_images;
     }
 }
 
@@ -37,9 +41,13 @@ impl Swapchain {
         #[cfg(feature = "log")]
         soh_log::log_debug!("Rereating swapchain for window size {:?}", window_size);
 
-        let new_swapchain = Self::create_swapchain(&self.device, surface, window_size, Some(self))?;
+        // let new_swapchain = Self::create_swapchain(&self.device, surface, window_size, Some(self))?;
+        // self.destroy();
+        // *self = new_swapchain;
+
         self.destroy();
-        *self = new_swapchain;
+        *self = Self::create_swapchain(&self.device, surface, window_size, None)?;
+
         return Ok(());
     }
 
@@ -60,8 +68,8 @@ impl Swapchain {
         let swapchain_support = device.physical().query_swapchain_support_info(surface)?;
         let queue_family_info = device.physical().queue_family_indices();
 
-        #[cfg(feature = "log")]
-        soh_log::log_debug!("SwapchainSupport: {:#?}", swapchain_support);
+        // #[cfg(feature = "log")]
+        // soh_log::log_debug!("SwapchainSupport: {:#?}", swapchain_support);
 
         let queue_family_indices = queue_family_info
             .get_unique_indices()
@@ -118,11 +126,15 @@ impl Swapchain {
 
         let swapchain = unsafe { device_swapchain.create_swapchain(&create_info, None)? };
 
+        let num_of_images =
+            unsafe { device.device_swapchain().get_swapchain_images(swapchain)? }.len();
+
         return Ok(Swapchain {
             device: device.clone(),
             swapchain,
             image_format: surface_format.format,
             extent,
+            num_of_images,
         });
     }
 }
@@ -149,14 +161,10 @@ impl Swapchain {
         wait_semaphore: &crate::sync::Semaphore,
         image_index: u32,
     ) -> Result<()> {
-        let wait_semaphores = &[**wait_semaphore];
-        let swapchains = &[**self];
-        let image_indices = &[image_index];
-
         let present_info = vk::PresentInfoKHR::default()
-            .wait_semaphores(wait_semaphores)
-            .swapchains(swapchains)
-            .image_indices(image_indices);
+            .wait_semaphores(std::slice::from_ref(wait_semaphore))
+            .swapchains(std::slice::from_ref(self))
+            .image_indices(std::slice::from_ref(&image_index));
 
         unsafe {
             self.device

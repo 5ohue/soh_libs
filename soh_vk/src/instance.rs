@@ -48,6 +48,24 @@ impl Instance {
         let required_extensions = Self::get_sdl2_extensions(window)?;
         let required_layers = Self::get_validation_layers(&entry)?;
 
+        // Log stuff
+        #[cfg(feature = "log")]
+        {
+            soh_log::log_info!("Required {} extensions", required_extensions.len());
+            for &required_ext in required_extensions.iter() {
+                let r_name = unsafe { CStr::from_ptr(required_ext) };
+
+                soh_log::log_info!("    {:?}", r_name);
+            }
+
+            soh_log::log_info!("Required {} layers", required_layers.len());
+            for &required_layer in required_layers.iter() {
+                let r_layer = unsafe { CStr::from_ptr(required_layer) };
+
+                soh_log::log_info!("    {:?}", r_layer);
+            }
+        }
+
         let mut create_info = vk::InstanceCreateInfo::default()
             .application_info(app_info)
             .enabled_layer_names(&required_layers)
@@ -74,11 +92,8 @@ impl Instance {
                 }
             }
 
-            let ext_name = r_name.to_string_lossy();
-            println!("{ext_name}");
             if !found {
-                let ext_name = r_name.to_string_lossy();
-                return Err(anyhow!("Extension {ext_name} not supported!"));
+                return Err(anyhow!("Extension {:?} not supported!", r_name));
             }
         }
 

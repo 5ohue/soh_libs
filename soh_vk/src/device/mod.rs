@@ -22,6 +22,9 @@ pub struct Device {
 /// it's redundant to have to provide devices everywhere)
 pub type DeviceRef = std::rc::Rc<Device>;
 
+// According to the vulkan documentation this should be OK
+unsafe impl Sync for Device {}
+
 // Getters
 impl Device {
     pub fn instance(&self) -> &crate::Instance {

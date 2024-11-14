@@ -138,7 +138,7 @@ impl Manager {
         fn deduce_shader_kind(path: &Path) -> shaderc::ShaderKind {
             let Some(ext) = path.extension() else {
                 #[cfg(feature = "log")]
-                soh_log::log_warning!("Couldn't deduce shader type for file \"{:?}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path);
+                soh_log::log_warning!("Couldn't deduce shader type for file \"{}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path.display());
                 return shaderc::ShaderKind::InferFromSource;
             };
 
@@ -148,7 +148,7 @@ impl Manager {
                 return shaderc::ShaderKind::Fragment;
             } else {
                 #[cfg(feature = "log")]
-                soh_log::log_warning!("Couldn't deduce shader type for file \"{:?}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path);
+                soh_log::log_warning!("Couldn't deduce shader type for file \"{}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path.display());
                 return shaderc::ShaderKind::InferFromSource;
             }
         }
@@ -162,7 +162,7 @@ impl Manager {
             let data = artifact.as_binary_u8();
 
             #[cfg(feature = "log")]
-            soh_log::log_debug!("Saving shader {:?}", bin_file_path);
+            soh_log::log_info!("Saving shader {:?}", bin_file_path);
 
             // let file = std::fs::OpenOptions::new().read(true).
 
@@ -172,13 +172,13 @@ impl Manager {
         let path = path.as_ref();
         if path.is_dir() {
             panic!(
-                "Trying to compile shader \"{:?}\" which is a directory",
-                path
+                "Trying to compile shader \"{}\" which is a directory",
+                path.display()
             );
         }
 
         #[cfg(feature = "log")]
-        soh_log::log_info!("Compiling shader {:?}", path);
+        soh_log::log_info!("Compiling shader \"{}\"", path.display());
 
         let shader_kind = deduce_shader_kind(path);
         let path_str = path.as_os_str().to_str().unwrap_or("");
@@ -204,22 +204,24 @@ impl Manager {
     }
 
     fn load_from_file<T: AsRef<Path>>(&self, path: T) -> Result<Vec<u32>> {
-        let data: Vec<_> = std::fs::read(path)?
-            .chunks(4)
-            .map(|chunk| {
-                return u32::from_ne_bytes([chunk[0], chunk[1], chunk[2], chunk[3]]);
-            })
-            .collect();
+        #[cfg(feature = "log")]
+        soh_log::log_info!("Loading precompiled shader: \"{}\"", path.as_ref().display());
 
-        if data[0] != 0x07230203 {
+        let u8_data = std::fs::read(path)?;
+        let u32_data: Vec<u32> = unsafe {
+            std::slice::from_raw_parts::<'_, u32>(u8_data.as_ptr().cast(), u8_data.len() / 4)
+        }
+        .into();
+
+        if u32_data[0] != 0x07230203 {
             #[cfg(feature = "log")]
             soh_log::log_error!(
                 "First byte isn't `0x07230203`, it is `{:#x}` instead",
-                data[0]
+                u32_data[0]
             );
         }
 
-        return Ok(data);
+        return Ok(u32_data);
     }
 
     #[inline(always)]

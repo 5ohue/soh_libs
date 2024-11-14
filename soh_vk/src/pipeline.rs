@@ -86,7 +86,6 @@ impl Pipeline {
             .src_alpha_blend_factor(vk::BlendFactor::ONE)
             .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
             .alpha_blend_op(vk::BlendOp::ADD);
-        let attachments = &[color_blend_attachment];
         /*** Blending pseudocode: ***/
         /*
          * if (blendEnable) {
@@ -101,7 +100,7 @@ impl Pipeline {
 
         let color_blending = vk::PipelineColorBlendStateCreateInfo::default()
             .logic_op_enable(false)
-            .attachments(attachments)
+            .attachments(std::slice::from_ref(&color_blend_attachment))
             .blend_constants([0.0; 4]);
 
         /*
@@ -126,7 +125,11 @@ impl Pipeline {
 
         let graphics_pipeline = unsafe {
             device
-                .create_graphics_pipelines(vk::PipelineCache::null(), &[pipeline_create_info], None)
+                .create_graphics_pipelines(
+                    vk::PipelineCache::null(),
+                    std::slice::from_ref(&pipeline_create_info),
+                    None,
+                )
                 .map_err(|(_, e)| e)?
         }[0];
 

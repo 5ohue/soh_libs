@@ -74,9 +74,9 @@ impl Buffer {
         let (viewport, scissor) = framebuffer.get_viewport_scissor();
         unsafe {
             self.device
-                .cmd_set_viewport(self.command_buffer, 0, &[viewport]);
+                .cmd_set_viewport(self.command_buffer, 0, std::slice::from_ref(&viewport));
             self.device
-                .cmd_set_scissor(self.command_buffer, 0, &[scissor]);
+                .cmd_set_scissor(self.command_buffer, 0, std::slice::from_ref(&scissor));
         }
 
         /*
@@ -115,21 +115,21 @@ impl Buffer {
         // Only submit primary buffers
         debug_assert_eq!(self.level, super::BufferLevel::Primary);
 
-        let wait_stages = &[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
-        let wait_semaphores = &[**wait_semaphore];
-        let signal_semaphores = &[**signal_semaphore];
-        let command_buffers = &[**self];
+        // This means that the pipeline is going to wait for the color attachment to be available
+        // ( so that GPU can run vertex shader before the image is available for example )
+        let wait_stages = std::slice::from_ref(&vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT);
 
         let submit_info = vk::SubmitInfo::default()
-            .wait_semaphores(wait_semaphores)
-            .signal_semaphores(signal_semaphores)
+            .wait_semaphores(std::slice::from_ref(wait_semaphore))
+            .signal_semaphores(std::slice::from_ref(signal_semaphore))
             .wait_dst_stage_mask(wait_stages)
-            .command_buffers(command_buffers);
+            .command_buffers(std::slice::from_ref(self));
 
         let fence = crate::get_opt_handle(fence);
 
         unsafe {
-            self.device.queue_submit(queue, &[submit_info], fence)?;
+            self.device
+                .queue_submit(queue, std::slice::from_ref(&submit_info), fence)?;
         }
 
         return Ok(());
