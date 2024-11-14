@@ -2,6 +2,8 @@ use anyhow::{anyhow, Result};
 use ash::vk;
 
 pub struct Pool {
+    device: crate::DeviceRef,
+
     command_pool: vk::CommandPool,
     queue_family_index: u32,
 }
@@ -19,7 +21,7 @@ impl Pool {
 
 // Constructor, destructor
 impl Pool {
-    pub fn new(device: &crate::Device, queue_family_index: u32) -> Result<Self> {
+    pub fn new(device: &crate::DeviceRef, queue_family_index: u32) -> Result<Self> {
         let create_info = vk::CommandPoolCreateInfo::default()
             .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
             .queue_family_index(queue_family_index);
@@ -27,12 +29,13 @@ impl Pool {
         let command_pool = unsafe { device.create_command_pool(&create_info, None)? };
 
         return Ok(Pool {
+            device: device.clone(),
             command_pool,
             queue_family_index,
         });
     }
 
-    pub fn new_graphics_queue(device: &crate::Device) -> Result<Self> {
+    pub fn new_graphics_queue(device: &crate::DeviceRef) -> Result<Self> {
         let Some(graphics_family) = device.physical().queue_family_indices().graphics_family else {
             return Err(anyhow!(
                 "No graphics queue family available to create command pool"
@@ -42,34 +45,29 @@ impl Pool {
         return Self::new(device, graphics_family);
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
-
+    pub fn destroy(&self) {
         unsafe {
-            device.destroy_command_pool(self.command_pool, None);
+            self.device.destroy_command_pool(self.command_pool, None);
         }
     }
 }
 
 // Specific implementation
 impl Pool {
-    pub fn allocate_buffer(
-        &self,
-        device: &crate::Device,
-        level: super::BufferLevel,
-    ) -> Result<super::Buffer> {
+    pub fn allocate_buffer(&self, level: super::BufferLevel) -> Result<super::Buffer> {
         let alloc_info = vk::CommandBufferAllocateInfo::default()
             .command_pool(**self)
             .level(level.into())
             .command_buffer_count(1);
 
-        let command_buffers = unsafe { device.allocate_command_buffers(&alloc_info)? };
+        let command_buffers = unsafe { self.device.allocate_command_buffers(&alloc_info)? };
 
         let Some(&command_buffer) = command_buffers.first() else {
             return Err(anyhow!("No command buffers were allocated"));
         };
 
         return Ok(super::Buffer::from_handle(
+            self.device.clone(),
             command_buffer,
             level,
             self.queue_family_index,
@@ -78,7 +76,6 @@ impl Pool {
 
     pub fn allocate_buffers(
         &self,
-        device: &crate::Device,
         level: super::BufferLevel,
         count: u32,
     ) -> Result<Vec<super::Buffer>> {
@@ -87,7 +84,7 @@ impl Pool {
             .level(level.into())
             .command_buffer_count(count);
 
-        let command_buffers = unsafe { device.allocate_command_buffers(&alloc_info)? };
+        let command_buffers = unsafe { self.device.allocate_command_buffers(&alloc_info)? };
 
         anyhow::ensure!(
             command_buffers.len() == count as usize,
@@ -96,7 +93,14 @@ impl Pool {
 
         let res = command_buffers
             .iter()
-            .map(|vk_buf| super::Buffer::from_handle(*vk_buf, level, self.queue_family_index))
+            .map(|vk_buf| {
+                super::Buffer::from_handle(
+                    self.device.clone(),
+                    *vk_buf,
+                    level,
+                    self.queue_family_index,
+                )
+            })
             .collect::<Vec<_>>();
 
         return Ok(res);

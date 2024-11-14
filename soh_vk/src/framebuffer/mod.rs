@@ -8,6 +8,8 @@ use anyhow::Result;
 use ash::vk;
 
 pub struct Framebuffer {
+    device: crate::DeviceRef,
+
     extent: vk::Extent2D,
 
     image_views: Vec<vk::ImageView>,
@@ -28,7 +30,7 @@ impl Framebuffer {
 // Constructor, destructor
 impl Framebuffer {
     pub fn new_from_swapchain(
-        device: &crate::Device,
+        device: &crate::DeviceRef,
         swapchain: &crate::Swapchain,
     ) -> Result<Self> {
         let image_views =
@@ -54,6 +56,7 @@ impl Framebuffer {
             .collect::<Vec<_>>();
 
         let framebuffer = Framebuffer {
+            device: device.clone(),
             extent,
             image_views,
             render_pass,
@@ -72,18 +75,16 @@ impl Framebuffer {
         return Ok(framebuffer);
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
-
+    pub fn destroy(&self) {
         unsafe {
-            self.render_pass.destroy(device);
+            self.render_pass.destroy();
 
             for &image_view in self.image_views.iter() {
-                device.destroy_image_view(image_view, None);
+                self.device.destroy_image_view(image_view, None);
             }
 
             for &framebuffer in self.framebuffers.iter() {
-                device.destroy_framebuffer(framebuffer, None);
+                self.device.destroy_framebuffer(framebuffer, None);
             }
         }
     }

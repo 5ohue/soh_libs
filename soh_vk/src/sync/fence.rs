@@ -1,14 +1,14 @@
 use anyhow::Result;
 use ash::vk;
 
-#[repr(transparent)]
 pub struct Fence {
+    device: crate::DeviceRef,
     fence: vk::Fence,
 }
 
 // Constructor, destructor
 impl Fence {
-    pub fn new(device: &crate::Device, signaled: bool) -> Result<Self> {
+    pub fn new(device: &crate::DeviceRef, signaled: bool) -> Result<Self> {
         let create_info = vk::FenceCreateInfo::default().flags(if signaled {
             vk::FenceCreateFlags::SIGNALED
         } else {
@@ -16,28 +16,30 @@ impl Fence {
         });
 
         let fence = unsafe { device.create_fence(&create_info, None)? };
-        return Ok(Fence { fence });
+        return Ok(Fence {
+            device: device.clone(),
+            fence,
+        });
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
+    pub fn destroy(&self) {
         unsafe {
-            device.destroy_fence(self.fence, None);
+            self.device.destroy_fence(self.fence, None);
         }
     }
 }
 
 // Specific implementation
 impl Fence {
-    pub fn wait(&self, device: &crate::Device) {
+    pub fn wait(&self) {
         unsafe {
-            let _ = device.wait_for_fences(&[self.fence], true, u64::MAX);
+            let _ = self.device.wait_for_fences(&[self.fence], true, u64::MAX);
         }
     }
 
-    pub fn reset(&self, device: &crate::Device) {
+    pub fn reset(&self) {
         unsafe {
-            let _ = device.reset_fences(&[self.fence]);
+            let _ = self.device.reset_fences(&[self.fence]);
         }
     }
 }

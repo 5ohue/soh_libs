@@ -2,6 +2,9 @@ use anyhow::{anyhow, Result};
 use ash::vk::{self, Handle};
 
 pub struct Device {
+    // Used to query swapchain info
+    instance: crate::InstanceRef,
+
     physical_device: vk::PhysicalDevice,
 
     info: PhysicalDeviceInfo,
@@ -13,7 +16,6 @@ pub struct PhysicalDeviceInfo {
     pub memory_props: vk::PhysicalDeviceMemoryProperties,
 
     pub queue_family_indices: QueueFamilyIndices,
-    pub swapchain_support: SwapchainSupportInfo,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -41,14 +43,11 @@ impl Device {
     pub fn queue_family_indices(&self) -> &QueueFamilyIndices {
         return &self.info.queue_family_indices;
     }
-    pub fn swapchain_support_info(&self) -> &SwapchainSupportInfo {
-        return &self.info.swapchain_support;
-    }
 }
 
 // Constructor, destructor
 impl Device {
-    pub fn new(instance: &crate::Instance, surface: &vk::SurfaceKHR) -> Result<Self> {
+    pub fn pick_device(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<Self> {
         let devices = unsafe { instance.enumerate_physical_devices()? };
 
         #[cfg(feature = "log")]
@@ -93,7 +92,8 @@ impl Device {
         let selected_device = suitable_devices[0];
 
         // This shouldn't panic because this function was already called for this device before
-        let gpu_info = PhysicalDeviceInfo::get_info(instance, *selected_device.1, surface).unwrap();
+        let gpu_info =
+            PhysicalDeviceInfo::query_info(instance, *selected_device.1, surface).unwrap();
 
         #[cfg(feature = "log")]
         {
@@ -106,6 +106,7 @@ impl Device {
         }
 
         return Ok(Device {
+            instance: instance.clone(),
             physical_device: *selected_device.1,
             info: gpu_info,
         });
@@ -114,6 +115,18 @@ impl Device {
 
 // Specific implementation
 impl Device {
+    #[inline(always)]
+    pub fn query_swapchain_support_info(
+        &self,
+        surface: &vk::SurfaceKHR,
+    ) -> Result<SwapchainSupportInfo> {
+        return PhysicalDeviceInfo::query_swapchain_support_info(
+            &self.instance,
+            self.physical_device,
+            surface,
+        );
+    }
+
     /// Find the index for the physical device memory type that supports the given properties
     ///
     /// * `type_filter`: the vk::MemoryRequirements::memory_type_bits field
@@ -135,17 +148,6 @@ impl Device {
         }
 
         return None;
-    }
-
-    #[inline(always)]
-    pub fn update_swapchain_support_info(
-        &mut self,
-        instance: &crate::Instance,
-        surface: &vk::SurfaceKHR,
-    ) -> Result<&SwapchainSupportInfo> {
-        return self
-            .info
-            .update_swapchain_support_info(instance, self.physical_device, surface);
     }
 
     fn is_device_suitable(
@@ -184,8 +186,10 @@ impl Device {
             return true;
         }
 
-        let Ok(device_info) = PhysicalDeviceInfo::get_info(instance, physical_device, surface)
-        else {
+        let (Ok(device_info), Ok(swapchain_support)) = (
+            PhysicalDeviceInfo::query_info(instance, physical_device, surface),
+            PhysicalDeviceInfo::query_swapchain_support_info(instance, physical_device, surface),
+        ) else {
             #[cfg(feature = "log")]
             {
                 let gpu_name =
@@ -200,8 +204,8 @@ impl Device {
 
         let extensions_supported = check_device_extension_support(instance, physical_device);
 
-        let swapchain_adequate = !device_info.swapchain_support.formats.is_empty()
-            && !device_info.swapchain_support.present_modes.is_empty();
+        let swapchain_adequate =
+            !swapchain_support.formats.is_empty() && !swapchain_support.present_modes.is_empty();
 
         return device_info.queue_family_indices.is_complete()
             && extensions_supported
@@ -210,7 +214,7 @@ impl Device {
 }
 
 impl PhysicalDeviceInfo {
-    fn get_info(
+    fn query_info(
         instance: &crate::Instance,
         physical_device: vk::PhysicalDevice,
         surface: &vk::SurfaceKHR,
@@ -220,30 +224,7 @@ impl PhysicalDeviceInfo {
             memory_props: Self::query_memory_properties(instance, physical_device),
 
             queue_family_indices: Self::find_queue_families(instance, physical_device, surface),
-            swapchain_support: Self::query_swapchain_support_info(
-                instance,
-                physical_device,
-                surface,
-            )?,
         });
-    }
-
-    /// Update the swapchain support info. This function only updates the capabilities
-    /// (which mainly updates the current extent)
-    #[inline(always)]
-    fn update_swapchain_support_info(
-        &mut self,
-        instance: &crate::Instance,
-        physical_device: vk::PhysicalDevice,
-        surface: &vk::SurfaceKHR,
-    ) -> Result<&SwapchainSupportInfo> {
-        let instance = instance.instance_surface();
-
-        self.swapchain_support.capabilities = unsafe {
-            instance.get_physical_device_surface_capabilities(physical_device, *surface)?
-        };
-
-        return Ok(&self.swapchain_support);
     }
 
     fn query_gpu_name(

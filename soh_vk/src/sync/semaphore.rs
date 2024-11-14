@@ -1,24 +1,26 @@
 use anyhow::Result;
 use ash::vk;
 
-#[repr(transparent)]
 pub struct Semaphore {
+    device: crate::DeviceRef,
     semaphore: vk::Semaphore,
 }
 
 // Constructor, destructor
 impl Semaphore {
-    pub fn new(device: &crate::Device) -> Result<Self> {
+    pub fn new(device: &crate::DeviceRef) -> Result<Self> {
         let create_info = vk::SemaphoreCreateInfo::default();
 
         let semaphore = unsafe { device.create_semaphore(&create_info, None)? };
-        return Ok(Semaphore { semaphore });
+        return Ok(Semaphore {
+            device: device.clone(),
+            semaphore,
+        });
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
+    pub fn destroy(&self) {
         unsafe {
-            device.destroy_semaphore(**self, None);
+            self.device.destroy_semaphore(**self, None);
         }
     }
 }

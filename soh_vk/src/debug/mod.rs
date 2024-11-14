@@ -39,14 +39,14 @@ where
 
 //-----------------------------------------------------------------------------
 /// Debug messenger
-#[repr(transparent)]
 pub struct Messenger {
+    instance: crate::InstanceRef,
     debug_messenger: vk::DebugUtilsMessengerEXT,
 }
 
 // Constructor, destructor
 impl Messenger {
-    pub fn new(instance: &crate::Instance) -> Result<Self> {
+    pub fn new(instance: &crate::InstanceRef) -> Result<Self> {
         if !crate::Instance::are_validation_layers_enabled() {
             return Err(anyhow!(
                 "Cannot create debug messenger! Validation layers are not enabled"
@@ -56,7 +56,7 @@ impl Messenger {
         #[cfg(feature = "log")]
         use soh_log::LogError;
 
-        let instance = instance.instance_debug_utils();
+        let instance_debug = instance.instance_debug_utils();
 
         #[cfg(feature = "log")]
         let create_info = Self::create_info()
@@ -65,18 +65,17 @@ impl Messenger {
         let create_info = Self::create_info()
             .expect("`setup_debug_messenger` must be called before `DebugMessenger::new()`");
 
-        let messenger = unsafe { instance.create_debug_utils_messenger(&create_info, None)? };
+        let messenger = unsafe { instance_debug.create_debug_utils_messenger(&create_info, None)? };
 
         return Ok(Messenger {
+            instance: instance.clone(),
             debug_messenger: messenger,
         });
     }
 
-    pub fn destroy(&self, instance: &crate::Instance) {
-        instance.assert_not_destroyed();
-
+    pub fn destroy(&self) {
         unsafe {
-            let instance = instance.instance_debug_utils();
+            let instance = self.instance.instance_debug_utils();
             instance.destroy_debug_utils_messenger(self.debug_messenger, None);
         }
     }

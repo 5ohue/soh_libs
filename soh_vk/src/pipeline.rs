@@ -2,6 +2,8 @@ use anyhow::Result;
 use ash::vk;
 
 pub struct Pipeline {
+    device: crate::DeviceRef,
+
     pipeline: vk::Pipeline,
     pipeline_layout: vk::PipelineLayout,
 }
@@ -9,7 +11,7 @@ pub struct Pipeline {
 // Constructor, destructor
 impl Pipeline {
     pub fn new(
-        device: &crate::Device,
+        device: &crate::DeviceRef,
         render_pass: &crate::RenderPass,
         vertex_shader: &crate::Shader,
         fragment_shader: &crate::Shader,
@@ -129,16 +131,17 @@ impl Pipeline {
         }[0];
 
         return Ok(Pipeline {
+            device: device.clone(),
             pipeline: graphics_pipeline,
             pipeline_layout,
         });
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
+    pub fn destroy(&self) {
         unsafe {
-            device.destroy_pipeline(self.pipeline, None);
-            device.destroy_pipeline_layout(self.pipeline_layout, None);
+            self.device.destroy_pipeline(self.pipeline, None);
+            self.device
+                .destroy_pipeline_layout(self.pipeline_layout, None);
         }
     }
 }

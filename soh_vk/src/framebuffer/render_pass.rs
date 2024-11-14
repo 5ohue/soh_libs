@@ -2,14 +2,15 @@
 use anyhow::Result;
 use ash::vk;
 
-#[repr(transparent)]
 pub struct RenderPass {
+    device: crate::DeviceRef,
+
     render_pass: vk::RenderPass,
 }
 
 // Constructor, destructor
 impl RenderPass {
-    pub fn new(device: &crate::Device, format: vk::Format) -> Result<Self> {
+    pub fn new(device: &crate::DeviceRef, format: vk::Format) -> Result<Self> {
         /*
          * Declare all of the attachments in the render pass
          * (attachment is a render target and corresponds to an image view in
@@ -69,13 +70,15 @@ impl RenderPass {
 
         let render_pass = unsafe { device.create_render_pass(&create_info, None)? };
 
-        return Ok(RenderPass { render_pass });
+        return Ok(RenderPass {
+            device: device.clone(),
+            render_pass,
+        });
     }
 
-    pub fn destroy(&self, device: &crate::Device) {
-        device.assert_not_destroyed();
+    pub fn destroy(&self) {
         unsafe {
-            device.destroy_render_pass(self.render_pass, None);
+            self.device.destroy_render_pass(self.render_pass, None);
         }
     }
 }

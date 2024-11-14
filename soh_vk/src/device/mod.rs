@@ -6,42 +6,42 @@ use anyhow::Result;
 use ash::vk::{self, Handle};
 
 pub struct Device {
+    // Keep instance from being destoyed
+    instance: crate::InstanceRef,
+
     physical: physical::Device,
     logical: ash::Device,
-
-    is_destroyed: bool,
 
     // EXT, KHR devices
     device_swapchain: ash::khr::swapchain::Device,
 }
 
+/// Device reference stored inside other vulkan types
+///
+/// (This is needed because the vulkan handles are implicitly bound to a specific device. Therefore
+/// it's redundant to have to provide devices everywhere)
+pub type DeviceRef = std::rc::Rc<Device>;
+
 // Getters
 impl Device {
+    pub fn instance(&self) -> &crate::Instance {
+        return &self.instance;
+    }
     pub fn physical(&self) -> &physical::Device {
         return &self.physical;
     }
-    pub fn physical_mut(&mut self) -> &mut physical::Device {
-        return &mut self.physical;
-    }
     pub fn device_swapchain(&self) -> &ash::khr::swapchain::Device {
         return &self.device_swapchain;
-    }
-
-    pub fn is_destroyed(&self) -> bool {
-        return self.is_destroyed;
-    }
-    pub fn assert_not_destroyed(&self) {
-        assert!(
-            !self.is_destroyed,
-            "This function should only be called before the device is destoyed"
-        );
     }
 }
 
 // Constructor, destructor
 impl Device {
-    pub fn new(instance: &crate::Instance, surface: &vk::SurfaceKHR) -> Result<Self> {
-        let physical = physical::Device::new(instance, surface)?;
+    pub fn new(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<DeviceRef> {
+        #[cfg(feature = "log")]
+        soh_log::log_info!("Creating logical device");
+
+        let physical = physical::Device::pick_device(instance, surface)?;
 
         // Make a `vkDeviceQueueCreateInfo` for each unique queue
         let queue_create_infos = physical
@@ -72,18 +72,24 @@ impl Device {
 
         let device_swapchain = ash::khr::swapchain::Device::new(instance, &device);
 
-        return Ok(Device {
+        return Ok(DeviceRef::new(Device {
+            instance: instance.clone(),
             physical,
             logical: device,
-            is_destroyed: false,
             device_swapchain,
-        });
+        }));
     }
+}
 
-    pub fn destroy(&mut self, instance: &crate::Instance) {
-        instance.assert_not_destroyed();
+// Drop
+impl Drop for Device {
+    fn drop(&mut self) {
+        #[cfg(feature = "log")]
+        soh_log::log_info!(
+            "Destroying logical device \"{}\"",
+            self.physical.info().name
+        );
 
-        self.is_destroyed = true;
         unsafe { self.logical.destroy_device(None) };
     }
 }

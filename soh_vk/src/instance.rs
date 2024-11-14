@@ -6,12 +6,13 @@ pub struct Instance {
     instance: ash::Instance,
     entry: Entry,
 
-    is_destroyed: bool,
-
     // EXT, KHR instances
     instance_debug_utils: ash::ext::debug_utils::Instance,
     instance_surface: ash::khr::surface::Instance,
 }
+
+/// Instance reference stored inside the dependant types (which is the logical device mainly)
+pub type InstanceRef = std::rc::Rc<Instance>;
 
 // Getters
 impl Instance {
@@ -30,21 +31,17 @@ impl Instance {
         // Only enable validation layers in a debug build
         return cfg!(debug_assertions) == true;
     }
-
-    pub fn is_destroyed(&self) -> bool {
-        return self.is_destroyed;
-    }
-    pub fn assert_not_destroyed(&self) {
-        assert!(
-            !self.is_destroyed,
-            "This should only be called before device is destroyed"
-        );
-    }
 }
 
 // Constructor, destructor
 impl Instance {
-    pub fn new(app_info: &vk::ApplicationInfo, window: &sdl2::video::Window) -> Result<Instance> {
+    pub fn new(
+        app_info: &vk::ApplicationInfo,
+        window: &sdl2::video::Window,
+    ) -> Result<InstanceRef> {
+        #[cfg(feature = "log")]
+        soh_log::log_info!("Creating instance");
+
         // TODO: make it more cross platform
         let entry = unsafe { Entry::load_from("/usr/lib/libvulkan.so")? };
 
@@ -92,22 +89,23 @@ impl Instance {
 
         drop(required_extensions);
 
-        return Ok(Instance {
+        return Ok(InstanceRef::new(Instance {
             instance,
             entry,
 
-            is_destroyed: false,
-
             instance_debug_utils,
             instance_surface,
-        });
+        }));
     }
+}
 
-    /// # Safety
-    /// The instance must be destroyed only after everything else has been destroyed
-    pub unsafe fn destroy(&mut self) {
-        self.is_destroyed = true;
-        self.instance.destroy_instance(None);
+// Drop
+impl Drop for Instance {
+    fn drop(&mut self) {
+        #[cfg(feature = "log")]
+        soh_log::log_info!("Destroying instance");
+
+        unsafe { self.instance.destroy_instance(None) };
     }
 }
 
