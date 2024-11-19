@@ -1,6 +1,9 @@
 use anyhow::Result;
 use ash::vk;
 
+const DYNAMIC_STATES: &[vk::DynamicState] =
+    &[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
+
 pub struct Pipeline {
     device: crate::DeviceRef,
 
@@ -13,12 +16,10 @@ impl Pipeline {
     pub fn new(
         device: &crate::DeviceRef,
         render_pass: &crate::RenderPass,
+        vertex_descriptions: &[crate::vertex::VertexDescription],
         vertex_shader: &crate::Shader,
         fragment_shader: &crate::Shader,
     ) -> Result<Self> {
-        const DYNAMIC_STATES: &[vk::DynamicState] =
-            &[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
-
         /*
          * Describe the programmable stages
          */
@@ -42,7 +43,12 @@ impl Pipeline {
         /*
          * Describe the layout of the input vertex data
          */
-        let vertex_input = vk::PipelineVertexInputStateCreateInfo::default();
+        let (binding_descriptions, attribute_descriptions) =
+            crate::vertex::get_vk_vertex_description(vertex_descriptions);
+
+        let vertex_input = vk::PipelineVertexInputStateCreateInfo::default()
+            .vertex_binding_descriptions(&binding_descriptions)
+            .vertex_attribute_descriptions(&attribute_descriptions);
 
         /*
          * Input assembly info

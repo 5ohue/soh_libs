@@ -42,6 +42,11 @@ pub mod command;
 // Synchronization promitives (fences, semaphores)
 pub mod sync;
 
+// Vertex trait and vertex buffer
+pub mod vertex;
+pub use vertex::Vertex;
+pub use soh_vk_derive::Vertex;
+
 //-----------------------------------------------------------------------------
 // Helps to easily get a handle from a Option<&WrapperType>
 fn get_opt_handle<T, H>(opt: Option<&T>) -> H

@@ -26,6 +26,7 @@ impl Buffer {
         image_index: usize,
         framebuffer: &crate::Framebuffer,
         graphics_pipeline: &crate::Pipeline,
+        vertex_buffer: &crate::vertex::Buffer,
     ) -> Result<()> {
         /*
          * Begin command buffer
@@ -69,6 +70,18 @@ impl Buffer {
         }
 
         /*
+         * Bind the vertex buffer
+         */
+        unsafe {
+            self.device.cmd_bind_vertex_buffers(
+                self.command_buffer,
+                0,
+                &[vertex_buffer.buffer().buffer()],
+                &[0],
+            );
+        }
+
+        /*
          * Dynamic state
          */
         let (viewport, scissor) = framebuffer.get_viewport_scissor();
@@ -83,7 +96,13 @@ impl Buffer {
          * Actually draw
          */
         unsafe {
-            self.device.cmd_draw(self.command_buffer, 3, 1, 0, 0);
+            self.device.cmd_draw(
+                self.command_buffer,
+                vertex_buffer.num_of_vertexes() as u32,
+                1,
+                0,
+                0,
+            );
         }
 
         /*

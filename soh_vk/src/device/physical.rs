@@ -14,6 +14,7 @@ pub struct Device {
 pub struct PhysicalDeviceInfo {
     pub name: String,
     pub memory_props: vk::PhysicalDeviceMemoryProperties,
+    pub device_props: vk::PhysicalDeviceProperties,
 
     pub queue_family_indices: QueueFamilyIndices,
 }
@@ -222,6 +223,7 @@ impl PhysicalDeviceInfo {
         return Ok(PhysicalDeviceInfo {
             name: Self::query_gpu_name(instance, physical_device)?,
             memory_props: Self::query_memory_properties(instance, physical_device),
+            device_props: Self::query_device_properties(instance, physical_device),
 
             queue_family_indices: Self::find_queue_families(instance, physical_device, surface),
         });
@@ -231,12 +233,13 @@ impl PhysicalDeviceInfo {
         instance: &crate::Instance,
         physical_device: vk::PhysicalDevice,
     ) -> Result<String> {
-        let properties = unsafe { instance.get_physical_device_properties(physical_device) };
-
-        return Ok(properties
+        let device_props = Self::query_device_properties(instance, physical_device);
+        let gpu_name = device_props
             .device_name_as_c_str()?
             .to_string_lossy()
-            .to_string());
+            .to_string();
+
+        return Ok(gpu_name);
     }
 
     fn query_memory_properties(
@@ -244,6 +247,13 @@ impl PhysicalDeviceInfo {
         physical_device: vk::PhysicalDevice,
     ) -> vk::PhysicalDeviceMemoryProperties {
         return unsafe { instance.get_physical_device_memory_properties(physical_device) };
+    }
+
+    fn query_device_properties(
+        instance: &crate::Instance,
+        physical_device: vk::PhysicalDevice,
+    ) -> vk::PhysicalDeviceProperties {
+        return unsafe { instance.get_physical_device_properties(physical_device) };
     }
 
     fn find_queue_families(
