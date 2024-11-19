@@ -205,7 +205,10 @@ impl Manager {
 
     fn load_from_file<T: AsRef<Path>>(&self, path: T) -> Result<Vec<u32>> {
         #[cfg(feature = "log")]
-        soh_log::log_info!("Loading precompiled shader: \"{}\"", path.as_ref().display());
+        soh_log::log_info!(
+            "Loading precompiled shader: \"{}\"",
+            path.as_ref().display()
+        );
 
         let u8_data = std::fs::read(path)?;
         let u32_data: Vec<u32> = unsafe {

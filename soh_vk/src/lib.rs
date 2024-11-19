@@ -44,8 +44,8 @@ pub mod sync;
 
 // Vertex trait and vertex buffer
 pub mod vertex;
-pub use vertex::Vertex;
 pub use soh_vk_derive::Vertex;
+pub use vertex::Vertex;
 
 //-----------------------------------------------------------------------------
 // Helps to easily get a handle from a Option<&WrapperType>
