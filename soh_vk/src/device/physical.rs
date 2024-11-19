@@ -23,6 +23,7 @@ pub struct PhysicalDeviceInfo {
 pub struct QueueFamilyIndices {
     pub graphics_family: Option<u32>,
     pub present_family: Option<u32>,
+    pub transfer_family: Option<u32>,
 }
 
 #[derive(Debug)]
@@ -264,6 +265,7 @@ impl PhysicalDeviceInfo {
         let mut res = QueueFamilyIndices {
             graphics_family: None,
             present_family: None,
+            transfer_family: None,
         };
 
         let queue_families =
@@ -274,6 +276,8 @@ impl PhysicalDeviceInfo {
         for (i, qf) in queue_families.iter().enumerate() {
             if qf.queue_flags.intersects(vk::QueueFlags::GRAPHICS) {
                 res.graphics_family = Some(i as u32);
+            } else if qf.queue_flags.intersects(vk::QueueFlags::TRANSFER) {
+                res.transfer_family = Some(i as u32);
             }
 
             let present_supported = unsafe {
@@ -328,12 +332,15 @@ impl QueueFamilyIndices {
             .graphics_family
             .iter()
             .chain(self.present_family.iter())
+            .chain(self.transfer_family.iter())
             .copied()
             .collect();
     }
 
     fn is_complete(&self) -> bool {
-        return self.graphics_family.is_some() && self.present_family.is_some();
+        return self.graphics_family.is_some()
+            && self.present_family.is_some()
+            && self.transfer_family.is_some();
     }
 }
 

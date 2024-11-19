@@ -125,6 +125,14 @@ impl Device {
 
         return vk::Queue::null();
     }
+
+    pub fn get_transfer_queue_family(&self) -> vk::Queue {
+        if let Some(idx) = self.physical.queue_family_indices().transfer_family {
+            return self.get_queue(idx);
+        }
+
+        return vk::Queue::null();
+    }
 }
 
 // Deref

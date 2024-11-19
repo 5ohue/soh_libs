@@ -45,6 +45,16 @@ impl Pool {
         return Self::new(device, graphics_family);
     }
 
+    pub fn new_transfer_queue(device: &crate::DeviceRef) -> Result<Self> {
+        let Some(transfer_family) = device.physical().queue_family_indices().transfer_family else {
+            return Err(anyhow!(
+                "No transfer queue family available to create command pool"
+            ));
+        };
+
+        return Self::new(device, transfer_family);
+    }
+
     pub fn destroy(&self) {
         unsafe {
             self.device.destroy_command_pool(self.command_pool, None);
