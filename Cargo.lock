@@ -183,7 +183,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "macros"
+name = "macro_impl_vec"
 version = "0.1.0"
 dependencies = [
  "quote",
@@ -319,7 +319,7 @@ dependencies = [
 name = "soh_math"
 version = "0.1.0"
 dependencies = [
- "macros",
+ "macro_impl_vec",
  "num-traits",
  "serde",
  "soh_rng",
@@ -358,6 +358,16 @@ dependencies = [
  "sdl2",
  "shaderc",
  "soh_log",
+ "soh_math",
+ "soh_vk_derive",
+]
+
+[[package]]
+name = "soh_vk_derive"
+version = "0.1.0"
+dependencies = [
+ "quote",
+ "syn",
 ]
 
 [[package]]

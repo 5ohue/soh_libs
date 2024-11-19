@@ -1,12 +1,7 @@
 //-----------------------------------------------------------------------------
-use num_traits::Float;
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
-//-----------------------------------------------------------------------------
 
 #[repr(C)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Complex<T> {
     pub re: T,
@@ -15,27 +10,34 @@ pub struct Complex<T> {
 
 //-----------------------------------------------------------------------------
 // Constructors
-impl<T> Complex<T>
-where
-    T: Float,
-{
-    pub fn new(real: T, imaginary: T) -> Self {
+impl<T> Complex<T> {
+    pub const fn new(real: T, imaginary: T) -> Self {
         return Self {
             re: real,
             im: imaginary,
         };
+    }
+}
+
+impl<T> Complex<T>
+where
+    T: num_traits::Num,
+{
+    /// Complex number which equals to zero
+    pub fn zero() -> Self {
+        return T::zero().into();
     }
 
     /// Complex number which equals to one
     pub fn one() -> Self {
         return T::one().into();
     }
+}
 
-    /// Complex number which equals to zero
-    pub fn zero() -> Self {
-        return T::zero().into();
-    }
-
+impl<T> Complex<T>
+where
+    T: num_traits::Float,
+{
     /// Create a complex number from angle with unit length
     pub fn from_angle(angle: T) -> Self {
         return Complex {
@@ -53,29 +55,61 @@ where
     }
 }
 
+//-----------------------------------------------------------------------------
 // Math functions
 impl<T> Complex<T>
 where
-    T: Float + From<f32>,
+    T: Copy,
 {
     /// Real part
-    pub fn real(&self) -> T {
+    pub const fn real(&self) -> T {
         return self.re;
     }
 
     /// Imaginary part
-    pub fn imag(&self) -> T {
+    pub const fn imag(&self) -> T {
         return self.im;
     }
+}
 
-    /// Get the angle of the complex number
-    pub fn phi(&self) -> T {
-        return self.im.atan2(self.re);
-    }
-
+impl<T> Complex<T>
+where
+    T: num_traits::Num + Copy,
+{
     /// Calculate the squared length
     pub fn len2(&self) -> T {
         return self.re * self.re + self.im * self.im;
+    }
+
+    /// Calculate the integer power of the number
+    pub fn powi(&self, pow: u32) -> Self {
+        let mut result: Complex<T> = Complex::one();
+        let mut k: u32 = pow;
+        let mut a: Complex<T> = *self;
+
+        loop {
+            let n = k / 2;
+            if 2 * n < k {
+                result *= a;
+            }
+            k = n;
+            a *= a;
+            if k == 0 {
+                break;
+            }
+        }
+
+        return result;
+    }
+}
+
+impl<T> Complex<T>
+where
+    T: num_traits::Float + From<f32>,
+{
+    /// Get the angle of the complex number
+    pub fn phi(&self) -> T {
+        return self.im.atan2(self.re);
     }
 
     /// Calculate the length (absolute value)
@@ -94,27 +128,6 @@ where
     /// Calculate the natural logarithm of the length
     pub fn ln_len(&self) -> T {
         return (self.len2()).ln() * 0.5.into();
-    }
-
-    /// Calculate the integer power of the number
-    pub fn powi(&self, pow: u32) -> Self {
-        let mut result: Complex<T> = Complex::one();
-        let mut k: u32 = pow;
-        let mut a: Complex<T> = *self;
-
-        loop {
-            let n = k / 2;
-            if 2 * n < k {
-                result = result * a;
-            }
-            k = n;
-            a = a * a;
-            if k == 0 {
-                break;
-            }
-        }
-
-        return result;
     }
 
     /// Calculate the float power of the number
@@ -150,7 +163,7 @@ where
 // Operator overloads
 impl<T> std::ops::Add for Complex<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -162,9 +175,19 @@ where
     }
 }
 
+impl<T> std::ops::AddAssign for Complex<T>
+where
+    T: std::ops::AddAssign,
+{
+    fn add_assign(&mut self, rhs: Self) {
+        self.re += rhs.re;
+        self.im += rhs.im;
+    }
+}
+
 impl<T> std::ops::Sub for Complex<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -176,23 +199,19 @@ where
     }
 }
 
-impl<T> std::ops::Mul for Complex<T>
+impl<T> std::ops::SubAssign for Complex<T>
 where
-    T: Float,
+    T: std::ops::SubAssign,
 {
-    type Output = Self;
-
-    fn mul(self, rhs: Self) -> Self {
-        return Complex {
-            re: self.re * rhs.re - self.im * rhs.im,
-            im: self.im * rhs.re + self.re * rhs.im,
-        };
+    fn sub_assign(&mut self, rhs: Self) {
+        self.re -= rhs.re;
+        self.im -= rhs.im;
     }
 }
 
 impl<T> std::ops::Mul<T> for Complex<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -204,9 +223,66 @@ where
     }
 }
 
+impl<T> std::ops::MulAssign<T> for Complex<T>
+where
+    T: std::ops::MulAssign + Copy,
+{
+    fn mul_assign(&mut self, rhs: T) {
+        self.re *= rhs;
+        self.im *= rhs;
+    }
+}
+
+impl<T> std::ops::Mul for Complex<T>
+where
+    T: num_traits::Num + Copy,
+{
+    type Output = Self;
+
+    fn mul(self, rhs: Self) -> Self {
+        return Complex {
+            re: self.re * rhs.re - self.im * rhs.im,
+            im: self.im * rhs.re + self.re * rhs.im,
+        };
+    }
+}
+
+impl<T> std::ops::MulAssign for Complex<T>
+where
+    T: num_traits::Num + Copy,
+{
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
+    }
+}
+
+impl<T> std::ops::Div<T> for Complex<T>
+where
+    T: num_traits::Num + Copy,
+{
+    type Output = Self;
+
+    fn div(self, rhs: T) -> Self::Output {
+        return Complex {
+            re: self.re / rhs,
+            im: self.im / rhs,
+        };
+    }
+}
+
+impl<T> std::ops::DivAssign<T> for Complex<T>
+where
+    T: std::ops::DivAssign + Copy,
+{
+    fn div_assign(&mut self, rhs: T) {
+        self.re /= rhs;
+        self.im /= rhs;
+    }
+}
+
 impl<T> std::ops::Div for Complex<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -223,23 +299,18 @@ where
     }
 }
 
-impl<T> std::ops::Div<T> for Complex<T>
+impl<T> std::ops::DivAssign for Complex<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
-    type Output = Self;
-
-    fn div(self, rhs: T) -> Self::Output {
-        return Complex {
-            re: self.re / rhs,
-            im: self.im / rhs,
-        };
+    fn div_assign(&mut self, rhs: Self) {
+        *self = *self / rhs;
     }
 }
 
 impl<T> std::ops::Neg for Complex<T>
 where
-    T: Float,
+    T: std::ops::Neg<Output = T>,
 {
     type Output = Self;
 
@@ -255,7 +326,7 @@ where
 // From implementations
 impl<T> From<T> for Complex<T>
 where
-    T: Float,
+    T: num_traits::Zero,
 {
     fn from(value: T) -> Self {
         return Complex {
@@ -269,7 +340,7 @@ where
 
 impl<T> std::fmt::Display for Complex<T>
 where
-    T: Float + std::fmt::Display,
+    T: num_traits::Num + std::ops::Neg<Output = T> + PartialOrd + std::fmt::Display + Copy,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         if self.im >= T::zero() {

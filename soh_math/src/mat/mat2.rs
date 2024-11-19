@@ -1,13 +1,10 @@
 //-----------------------------------------------------------------------------
 use crate::Vec2;
 use num_traits::Float;
-
-#[cfg(feature = "serde")]
-use serde::{Deserialize, Serialize};
 //-----------------------------------------------------------------------------
 /// 2x2 matrix ( column major )
-#[repr(C)]
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[repr(transparent)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Default, Clone, Copy, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Mat2<T>(pub [T; 4]);
 
@@ -15,34 +12,37 @@ pub struct Mat2<T>(pub [T; 4]);
 
 impl<T> Mat2<T>
 where
-    T: Float + std::iter::Sum,
+    T: Copy,
 {
     /// Construct a matrix from values ( column major )
-    pub fn new(m: [T; 4]) -> Self {
+    pub const fn new(m: [T; 4]) -> Self {
         return Mat2(m);
     }
 
     /// Construct a matrix from rows
-    pub fn from_rows(rows: [[T; 2]; 2]) -> Self {
+    pub const fn from_rows(rows: [[T; 2]; 2]) -> Self {
         return Mat2([rows[0][0], rows[1][0], rows[0][1], rows[1][1]]);
     }
 
     /// Construct a matrix from columns
-    pub fn from_cols(cols: [[T; 2]; 2]) -> Self {
+    pub const fn from_cols(cols: [[T; 2]; 2]) -> Self {
         return Mat2([cols[0][0], cols[0][1], cols[1][0], cols[1][1]]);
     }
 
+    /// Get the element at row `row` and column `col`
+    #[inline(always)]
+    pub const fn at(&self, row: usize, col: usize) -> T {
+        return self.0[col * 2 + row];
+    }
+}
+
+impl<T> Mat2<T>
+where
+    T: num_traits::Num + std::ops::Neg<Output = T> + Copy,
+{
     /// Get the identity matrix
     pub fn identity() -> Self {
         return Mat2([T::one(), T::zero(), T::zero(), T::one()]);
-    }
-
-    /// Construct a rotation matrix for angle `phi`
-    pub fn rot(phi: T) -> Self {
-        let cos_phi = phi.cos();
-        let sin_phi = phi.sin();
-
-        return Mat2([cos_phi, sin_phi, -sin_phi, cos_phi]);
     }
 
     /// Construct a scaling matrix
@@ -56,13 +56,26 @@ where
     }
 
     /// Get the transposed matrix
-    pub fn t(&self) -> Self {
+    pub const fn t(&self) -> Self {
         return Mat2([self.0[0], self.0[2], self.0[1], self.0[3]]);
     }
 
     /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
         return Mat2([self.0[3], -self.0[1], -self.0[2], self.0[0]]) / self.det();
+    }
+}
+
+impl<T> Mat2<T>
+where
+    T: Float + std::iter::Sum,
+{
+    /// Construct a rotation matrix for angle `phi`
+    pub fn rot(phi: T) -> Self {
+        let cos_phi = phi.cos();
+        let sin_phi = phi.sin();
+
+        return Mat2([cos_phi, sin_phi, -sin_phi, cos_phi]);
     }
 
     /// Get the norm
@@ -75,7 +88,7 @@ where
 // Operator overloads
 impl<T> std::ops::Add for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -91,7 +104,7 @@ where
 
 impl<T> std::ops::Sub for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -107,7 +120,7 @@ where
 
 impl<T> std::ops::Mul<T> for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -123,7 +136,7 @@ where
 
 impl<T> std::ops::Mul<Vec2<T>> for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Vec2<T>;
 
@@ -137,7 +150,7 @@ where
 
 impl<T> std::ops::Mul for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 
@@ -153,7 +166,7 @@ where
 
 impl<T> std::ops::Div<T> for Mat2<T>
 where
-    T: Float,
+    T: num_traits::Num + Copy,
 {
     type Output = Self;
 

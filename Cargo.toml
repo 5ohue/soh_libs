@@ -33,7 +33,7 @@ members = [
     "soh_math",
     "soh_rng",
     "soh_log",
-    "soh_vk" ,
+    "soh_vk",
     "soh_ui",
     "soh_thread"
 ]
@@ -60,6 +60,10 @@ num-traits = "<1.0"
 ash = "<1.0"
 sdl2 = "<1.0"
 ron = "<1.0"
+
+# Macro libs
+syn = { version = "2.0", features = [ "full" ] }
+quote = "1.0"
 
 [workspace.lints.clippy]
 needless_return = "allow"   # I like returns

@@ -1,9 +1,6 @@
 //-----------------------------------------------------------------------------
-use macros::impl_vec;
-use num_traits::Float;
-//-----------------------------------------------------------------------------
-#[repr(C)]
-#[impl_vec]
+
+#[macro_impl_vec::impl_vec]
 pub struct Vec2<T> {
     pub x: T,
     pub y: T,
@@ -13,7 +10,7 @@ pub struct Vec2<T> {
 // Math functions
 impl<T> Vec2<T>
 where
-    T: Float,
+    T: num_traits::Float,
 {
     pub fn cross(vec1: &Self, vec2: &Self) -> T {
         return vec1.x * vec2.y - vec1.y * vec2.x;

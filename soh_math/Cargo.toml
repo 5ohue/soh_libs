@@ -4,7 +4,7 @@ version.workspace = true
 edition.workspace = true
 
 [dependencies]
-macros = { path = "./macros" }
+macro_impl_vec = { path = "./macro_impl_vec" }
 serde = { workspace = true, optional = true }
 num-traits = { workspace = true }
 
