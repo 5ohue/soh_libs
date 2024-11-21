@@ -72,7 +72,7 @@ impl Buffer {
         let memory = unsafe { device.allocate_memory(&alloc_info, None)? };
 
         /*
-         * Bind memory
+         * Bind allocted memory to buffer
          */
         unsafe {
             device.bind_buffer_memory(buffer, memory, 0)?;

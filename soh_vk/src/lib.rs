@@ -6,7 +6,6 @@ mod device;
 mod framebuffer;
 mod instance;
 mod pipeline;
-mod queue;
 mod surface;
 mod swapchain;
 //-----------------------------------------------------------------------------
@@ -15,7 +14,6 @@ pub use device::*;
 pub use framebuffer::*;
 pub use instance::*;
 pub use pipeline::*;
-pub use queue::*;
 pub use surface::*;
 pub use swapchain::*;
 //-----------------------------------------------------------------------------

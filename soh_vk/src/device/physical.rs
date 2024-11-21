@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::{anyhow, Result};
 use ash::vk::{self, Handle};
+//-----------------------------------------------------------------------------
 
 pub struct Device {
     // Used to query swapchain info
@@ -19,6 +21,8 @@ pub struct PhysicalDeviceInfo {
     pub queue_family_indices: QueueFamilyIndices,
 }
 
+//-----------------------------------------------------------------------------
+
 #[derive(Clone, Copy, Debug)]
 pub struct QueueFamilyIndices {
     pub graphics_family: u32,
@@ -33,6 +37,8 @@ pub struct SwapchainSupportInfo {
     pub formats: Vec<vk::SurfaceFormatKHR>,
     pub present_modes: Vec<vk::PresentModeKHR>,
 }
+
+//-----------------------------------------------------------------------------
 
 // Getters
 impl Device {
@@ -80,9 +86,10 @@ impl Device {
             .collect::<Vec<_>>();
 
         // Throw error if no suitable devices
-        if suitable_devices.is_empty() {
-            return Err(anyhow!("Coudn't find suitable physical device"));
-        }
+        anyhow::ensure!(
+            !suitable_devices.is_empty(),
+            "Coudn't find suitable physical device"
+        );
 
         #[cfg(feature = "log")]
         {
@@ -220,6 +227,8 @@ impl Device {
         return extensions_supported && swapchain_adequate;
     }
 }
+
+//-----------------------------------------------------------------------------
 
 impl PhysicalDeviceInfo {
     fn query_info(
@@ -380,6 +389,8 @@ impl QueueFamilyIndices {
     }
 }
 
+//-----------------------------------------------------------------------------
+
 // Deref
 impl std::ops::Deref for Device {
     type Target = vk::PhysicalDevice;
@@ -388,3 +399,5 @@ impl std::ops::Deref for Device {
         return &self.physical_device;
     }
 }
+
+//-----------------------------------------------------------------------------

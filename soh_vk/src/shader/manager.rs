@@ -232,9 +232,10 @@ impl Manager {
         // This function looks very ugly
         let path = path.as_ref();
 
-        if path.is_dir() {
-            return Err(anyhow!("Trying to get binary filename for a directory"));
-        }
+        anyhow::ensure!(
+            path.is_file(),
+            "Trying to get binary filename for a directory"
+        );
 
         let dir = path.parent();
 

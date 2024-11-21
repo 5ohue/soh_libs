@@ -47,11 +47,10 @@ pub struct Messenger {
 // Constructor, destructor
 impl Messenger {
     pub fn new(instance: &crate::InstanceRef) -> Result<Self> {
-        if !crate::Instance::are_validation_layers_enabled() {
-            return Err(anyhow!(
-                "Cannot create debug messenger! Validation layers are not enabled"
-            ));
-        }
+        anyhow::ensure!(
+            crate::Instance::are_validation_layers_enabled(),
+            "Cannot create debug messenger! Validation layers are not enabled"
+        );
 
         #[cfg(feature = "log")]
         use soh_log::LogError;

@@ -65,11 +65,11 @@ impl Swapchain {
         window_size: (u32, u32),
         old_swapchain: Option<&Self>,
     ) -> Result<Self> {
+        /*
+         * Get GPU info
+         */
         let swapchain_support = device.physical().query_swapchain_support_info(surface)?;
         let queue_family_info = device.physical().queue_family_indices();
-
-        // #[cfg(feature = "log")]
-        // soh_log::log_debug!("SwapchainSupport: {:#?}", swapchain_support);
 
         let queue_family_indices = queue_family_info
             .get_unique_indices()
@@ -78,22 +78,17 @@ impl Swapchain {
 
         let device_swapchain = device.device_swapchain();
 
+        /*
+         * Choose format, present mode, extent and image count
+         */
         let surface_format = Self::choose_swapchain_format(&swapchain_support.formats);
         let present_mode = Self::choose_swapchain_present_mode(&swapchain_support.present_modes);
         let extent = Self::choose_swap_extent(&swapchain_support.capabilities, window_size);
+        let image_count = Self::choose_image_count(&swapchain_support.capabilities);
 
-        // #[cfg(feature = "log")]
-        // soh_log::log_debug!("Chose extent: {:?}", extent);
-
-        let image_count = if swapchain_support.capabilities.max_image_count == 0 {
-            swapchain_support.capabilities.min_image_count + 1
-        } else {
-            u32::min(
-                swapchain_support.capabilities.min_image_count + 1,
-                swapchain_support.capabilities.max_image_count,
-            )
-        };
-
+        /*
+         * Create swapchain
+         */
         let mut create_info = vk::SwapchainCreateInfoKHR::default()
             .surface(**surface)
             .min_image_count(image_count)
@@ -105,12 +100,7 @@ impl Swapchain {
             .queue_family_indices(&queue_family_indices)
             .old_swapchain(crate::get_opt_handle(old_swapchain));
 
-        let &crate::physical::QueueFamilyIndices {
-            graphics_family: gf,
-            present_family: pf,
-            ..
-        } = queue_family_info;
-        if gf != pf {
+        if queue_family_info.graphics_family != queue_family_info.present_family {
             create_info.image_sharing_mode = vk::SharingMode::CONCURRENT;
         } else {
             create_info.image_sharing_mode = vk::SharingMode::EXCLUSIVE;
@@ -228,6 +218,19 @@ impl Swapchain {
                 capabilities.max_image_extent.height,
             ),
         };
+    }
+
+    fn choose_image_count(capabilities: &vk::SurfaceCapabilitiesKHR) -> u32 {
+        let image_count = if capabilities.max_image_count == 0 {
+            capabilities.min_image_count + 1
+        } else {
+            u32::min(
+                capabilities.min_image_count + 1,
+                capabilities.max_image_count,
+            )
+        };
+
+        return image_count;
     }
 }
 

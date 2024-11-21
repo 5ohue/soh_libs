@@ -92,17 +92,13 @@ impl Instance {
                 }
             }
 
-            if !found {
-                return Err(anyhow!("Extension {:?} not supported!", r_name));
-            }
+            anyhow::ensure!(found, "Extension {:?} not supported!", r_name);
         }
 
         let instance = unsafe { entry.create_instance(&create_info, None)? };
 
         let instance_debug_utils = ash::ext::debug_utils::Instance::new(&entry, &instance);
         let instance_surface = ash::khr::surface::Instance::new(&entry, &instance);
-
-        drop(required_extensions);
 
         return Ok(InstanceRef::new(Instance {
             instance,
@@ -172,12 +168,11 @@ impl Instance {
             )
         };
 
-        if res != SDL_TRUE {
-            return Err(anyhow!(
-                "Failed to get the SDL2 instance extension count ({})",
-                sdl2::get_error()
-            ));
-        }
+        anyhow::ensure!(
+            res == SDL_TRUE,
+            "Failed to get the SDL2 instance extension count ({})",
+            sdl2::get_error()
+        );
 
         // Get extensions
         let mut extensions = vec![std::ptr::null(); extension_count as usize];
@@ -198,12 +193,11 @@ impl Instance {
             extensions.push(EXTENSION_NAME.as_ptr());
         }
 
-        if res != SDL_TRUE {
-            return Err(anyhow!(
-                "Failed to get the SDL2 instance extensions ({})",
-                sdl2::get_error()
-            ));
-        }
+        anyhow::ensure!(
+            res == SDL_TRUE,
+            "Failed to get the SDL2 instance extensions ({})",
+            sdl2::get_error()
+        );
 
         Ok(extensions)
     }
