@@ -35,22 +35,14 @@ impl Pool {
         });
     }
 
-    pub fn new_graphics_queue(device: &crate::DeviceRef) -> Result<Self> {
-        let Some(graphics_family) = device.physical().queue_family_indices().graphics_family else {
-            return Err(anyhow!(
-                "No graphics queue family available to create command pool"
-            ));
-        };
+    pub fn new_graphics(device: &crate::DeviceRef) -> Result<Self> {
+        let graphics_family = device.physical().queue_family_indices().graphics_family;
 
         return Self::new(device, graphics_family);
     }
 
-    pub fn new_transfer_queue(device: &crate::DeviceRef) -> Result<Self> {
-        let Some(transfer_family) = device.physical().queue_family_indices().transfer_family else {
-            return Err(anyhow!(
-                "No transfer queue family available to create command pool"
-            ));
-        };
+    pub fn new_transfer(device: &crate::DeviceRef) -> Result<Self> {
+        let transfer_family = device.physical().queue_family_indices().transfer_family;
 
         return Self::new(device, transfer_family);
     }

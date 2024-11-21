@@ -14,6 +14,11 @@ pub struct Device {
 
     // EXT, KHR devices
     device_swapchain: ash::khr::swapchain::Device,
+
+    // Queues
+    graphics_queue: vk::Queue,
+    present_queue: vk::Queue,
+    transfer_queue: vk::Queue,
 }
 
 /// Device reference stored inside other vulkan types
@@ -36,6 +41,16 @@ impl Device {
     pub fn device_swapchain(&self) -> &ash::khr::swapchain::Device {
         return &self.device_swapchain;
     }
+
+    pub fn graphics_queue(&self) -> vk::Queue {
+        return self.graphics_queue;
+    }
+    pub fn present_queue(&self) -> vk::Queue {
+        return self.present_queue;
+    }
+    pub fn transfer_queue(&self) -> vk::Queue {
+        return self.transfer_queue;
+    }
 }
 
 // Constructor, destructor
@@ -44,9 +59,15 @@ impl Device {
         #[cfg(feature = "log")]
         soh_log::log_info!("Creating logical device");
 
+        /*
+         * Pick logical device
+         */
         let physical = physical::Device::pick_device(instance, surface)?;
 
-        // Make a `vkDeviceQueueCreateInfo` for each unique queue
+        /*
+         * Create queues:
+         * Make a `vkDeviceQueueCreateInfo` for each unique queue
+         */
         let queue_create_infos = physical
             .queue_family_indices()
             .get_unique_indices()
@@ -58,6 +79,9 @@ impl Device {
             })
             .collect::<Vec<_>>();
 
+        /*
+         * Specify extensions
+         */
         let swapchain_extension_name = ash::khr::swapchain::NAME;
         let extensions = [swapchain_extension_name.as_ptr()];
 
@@ -66,6 +90,9 @@ impl Device {
             .fill_mode_non_solid(true) // For lines
             .wide_lines(true); // For wide lines
 
+        /*
+         * Create logical device
+         */
         let create_info = vk::DeviceCreateInfo::default()
             .queue_create_infos(&queue_create_infos)
             .enabled_features(&device_features)
@@ -75,11 +102,24 @@ impl Device {
 
         let device_swapchain = ash::khr::swapchain::Device::new(instance, &device);
 
+        /*
+         * Get queues
+         */
+        let graphics_queue =
+            Self::__get_queue(&device, physical.queue_family_indices().graphics_family);
+        let present_queue =
+            Self::__get_queue(&device, physical.queue_family_indices().present_family);
+        let transfer_queue =
+            Self::__get_queue(&device, physical.queue_family_indices().transfer_family);
+
         return Ok(DeviceRef::new(Device {
             instance: instance.clone(),
             physical,
             logical: device,
             device_swapchain,
+            graphics_queue,
+            present_queue,
+            transfer_queue,
         }));
     }
 }
@@ -107,31 +147,11 @@ impl Device {
 
     /// Get a queue handle for specified queue family index
     pub fn get_queue(&self, queue_family_index: u32) -> vk::Queue {
-        return unsafe { self.logical.get_device_queue(queue_family_index, 0) };
+        return Self::__get_queue(&self.logical, queue_family_index);
     }
 
-    pub fn get_graphics_queue_family(&self) -> vk::Queue {
-        if let Some(idx) = self.physical.queue_family_indices().graphics_family {
-            return self.get_queue(idx);
-        }
-
-        return vk::Queue::null();
-    }
-
-    pub fn get_present_queue_family(&self) -> vk::Queue {
-        if let Some(idx) = self.physical.queue_family_indices().present_family {
-            return self.get_queue(idx);
-        }
-
-        return vk::Queue::null();
-    }
-
-    pub fn get_transfer_queue_family(&self) -> vk::Queue {
-        if let Some(idx) = self.physical.queue_family_indices().transfer_family {
-            return self.get_queue(idx);
-        }
-
-        return vk::Queue::null();
+    fn __get_queue(device: &ash::Device, queue_family_index: u32) -> vk::Queue {
+        return unsafe { device.get_device_queue(queue_family_index, 0) };
     }
 }
 

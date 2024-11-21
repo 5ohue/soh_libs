@@ -105,17 +105,15 @@ impl Swapchain {
             .queue_family_indices(&queue_family_indices)
             .old_swapchain(crate::get_opt_handle(old_swapchain));
 
-        if let &crate::physical::QueueFamilyIndices {
-            graphics_family: Some(gf),
-            present_family: Some(pf),
+        let &crate::physical::QueueFamilyIndices {
+            graphics_family: gf,
+            present_family: pf,
             ..
-        } = queue_family_info
-        {
-            if gf != pf {
-                create_info.image_sharing_mode = vk::SharingMode::CONCURRENT;
-            } else {
-                create_info.image_sharing_mode = vk::SharingMode::EXCLUSIVE;
-            }
+        } = queue_family_info;
+        if gf != pf {
+            create_info.image_sharing_mode = vk::SharingMode::CONCURRENT;
+        } else {
+            create_info.image_sharing_mode = vk::SharingMode::EXCLUSIVE;
         }
 
         let create_info = create_info
@@ -169,7 +167,7 @@ impl Swapchain {
         unsafe {
             self.device
                 .device_swapchain()
-                .queue_present(self.device.get_present_queue_family(), &present_info)?
+                .queue_present(self.device.present_queue(), &present_info)?
         };
 
         return Ok(());

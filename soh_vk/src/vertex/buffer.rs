@@ -1,5 +1,4 @@
 use anyhow::Result;
-use ash::vk;
 
 pub struct Buffer {
     buffer: crate::Buffer,
@@ -27,38 +26,7 @@ impl Buffer {
     where
         T: super::Vertex,
     {
-        let buffer_size = size_of_val(data) as u64;
-
-        /*
-         * Create and allocate buffer
-         */
-        let buffer = crate::Buffer::new(
-            device,
-            buffer_size,
-            crate::BufferUsageFlags::VERTEX_BUFFER,
-            crate::MemoryPropertyFlags::HOST_VISIBLE | crate::MemoryPropertyFlags::HOST_COHERENT,
-        )?;
-
-        /*
-         * Map the memory
-         */
-        let data_ptr = unsafe {
-            device.map_memory(buffer.memory(), 0, buffer_size, vk::MemoryMapFlags::empty())?
-        };
-
-        /*
-         * Write the data to the mapped memory
-         */
-        unsafe {
-            std::ptr::copy_nonoverlapping(data.as_ptr().cast(), data_ptr, buffer_size as usize);
-        }
-
-        /*
-         * Unmap
-         */
-        unsafe {
-            device.unmap_memory(buffer.memory());
-        }
+        let buffer = crate::Buffer::new_data(device, data)?;
 
         return Ok(Buffer {
             buffer,
@@ -67,7 +35,7 @@ impl Buffer {
         });
     }
 
-    pub fn destroy(&self) {
-        self.buffer.destroy();
+    pub fn free(&self) {
+        self.buffer.free();
     }
 }

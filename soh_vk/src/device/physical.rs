@@ -21,9 +21,9 @@ pub struct PhysicalDeviceInfo {
 
 #[derive(Clone, Copy, Debug)]
 pub struct QueueFamilyIndices {
-    pub graphics_family: Option<u32>,
-    pub present_family: Option<u32>,
-    pub transfer_family: Option<u32>,
+    pub graphics_family: u32,
+    pub present_family: u32,
+    pub transfer_family: u32,
 }
 
 #[derive(Debug)]
@@ -50,6 +50,9 @@ impl Device {
 // Constructor, destructor
 impl Device {
     pub fn pick_device(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<Self> {
+        /*
+         * Enumerate available GPUs
+         */
         let devices = unsafe { instance.enumerate_physical_devices()? };
 
         #[cfg(feature = "log")]
@@ -64,7 +67,9 @@ impl Device {
             })
         }
 
-        // Loop over all devices and choose the suitable one
+        /*
+         * Loop over all devices and choose the suitable one
+         */
         let suitable_devices = devices
             .iter()
             .enumerate()
@@ -93,7 +98,10 @@ impl Device {
 
         let selected_device = suitable_devices[0];
 
-        // This shouldn't panic because this function was already called for this device before
+        /*
+         * Query gpu info:
+         * This shouldn't panic because this function was already called for this device before
+         */
         let gpu_info =
             PhysicalDeviceInfo::query_info(instance, *selected_device.1, surface).unwrap();
 
@@ -188,7 +196,7 @@ impl Device {
             return true;
         }
 
-        let (Ok(device_info), Ok(swapchain_support)) = (
+        let (Ok(_), Ok(swapchain_support)) = (
             PhysicalDeviceInfo::query_info(instance, physical_device, surface),
             PhysicalDeviceInfo::query_swapchain_support_info(instance, physical_device, surface),
         ) else {
@@ -209,9 +217,7 @@ impl Device {
         let swapchain_adequate =
             !swapchain_support.formats.is_empty() && !swapchain_support.present_modes.is_empty();
 
-        return device_info.queue_family_indices.is_complete()
-            && extensions_supported
-            && swapchain_adequate;
+        return extensions_supported && swapchain_adequate;
     }
 }
 
@@ -226,7 +232,7 @@ impl PhysicalDeviceInfo {
             memory_props: Self::query_memory_properties(instance, physical_device),
             device_props: Self::query_device_properties(instance, physical_device),
 
-            queue_family_indices: Self::find_queue_families(instance, physical_device, surface),
+            queue_family_indices: Self::find_queue_families(instance, physical_device, surface)?,
         });
     }
 
@@ -261,18 +267,45 @@ impl PhysicalDeviceInfo {
         instance: &crate::Instance,
         physical_device: vk::PhysicalDevice,
         surface: &vk::SurfaceKHR,
-    ) -> QueueFamilyIndices {
-        let mut res = QueueFamilyIndices {
+    ) -> Result<QueueFamilyIndices> {
+        /*
+         * Declare optional queue type
+         */
+        #[derive(Clone, Copy, Debug)]
+        pub struct OptionalQueueFamilyIndices {
+            pub graphics_family: Option<u32>,
+            pub present_family: Option<u32>,
+            pub transfer_family: Option<u32>,
+        }
+
+        impl OptionalQueueFamilyIndices {
+            fn is_complete(&self) -> bool {
+                return self.graphics_family.is_some()
+                    && self.present_family.is_some()
+                    && self.transfer_family.is_some();
+            }
+        }
+
+        /*
+         * Create empty queues
+         */
+        let mut res = OptionalQueueFamilyIndices {
             graphics_family: None,
             present_family: None,
             transfer_family: None,
         };
 
+        /*
+         * Get queue data
+         */
         let queue_families =
             unsafe { instance.get_physical_device_queue_family_properties(physical_device) };
 
         let instance = instance.instance_surface();
 
+        /*
+         * Iterate over queues and find the appropriate queue indices
+         */
         for (i, qf) in queue_families.iter().enumerate() {
             if qf.queue_flags.intersects(vk::QueueFlags::GRAPHICS) {
                 res.graphics_family = Some(i as u32);
@@ -295,7 +328,16 @@ impl PhysicalDeviceInfo {
             }
         }
 
-        return res;
+        anyhow::ensure!(
+            res.is_complete(),
+            "The queue family indices are not complete!"
+        );
+
+        return Ok(QueueFamilyIndices {
+            graphics_family: res.graphics_family.unwrap(),
+            present_family: res.present_family.unwrap(),
+            transfer_family: res.transfer_family.unwrap(),
+        });
     }
 
     fn query_swapchain_support_info(
@@ -327,20 +369,14 @@ impl PhysicalDeviceInfo {
 impl QueueFamilyIndices {
     /// Return a set of all unique indices
     pub fn get_unique_indices(&self) -> std::collections::HashSet<u32> {
-        // Abuse `Option::iter` method
-        return self
-            .graphics_family
-            .iter()
-            .chain(self.present_family.iter())
-            .chain(self.transfer_family.iter())
-            .copied()
-            .collect();
-    }
-
-    fn is_complete(&self) -> bool {
-        return self.graphics_family.is_some()
-            && self.present_family.is_some()
-            && self.transfer_family.is_some();
+        return [
+            self.graphics_family,
+            self.present_family,
+            self.transfer_family,
+        ]
+        .iter()
+        .copied()
+        .collect();
     }
 }
 

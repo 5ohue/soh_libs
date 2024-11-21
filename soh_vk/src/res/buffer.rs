@@ -6,6 +6,10 @@ pub struct Buffer {
 
     buffer: vk::Buffer,
     memory: vk::DeviceMemory,
+    size: u64,
+
+    usage: crate::BufferUsageFlags,
+    properties: crate::MemoryPropertyFlags,
 }
 
 // Getters
@@ -16,13 +20,22 @@ impl Buffer {
     pub fn memory(&self) -> vk::DeviceMemory {
         return self.memory;
     }
+    pub fn size(&self) -> u64 {
+        return self.size;
+    }
+    pub fn usage(&self) -> crate::BufferUsageFlags {
+        return self.usage;
+    }
+    pub fn properties(&self) -> crate::MemoryPropertyFlags {
+        return self.properties;
+    }
 }
 
 // Constructor, destructor
 impl Buffer {
     pub fn new(
         device: &crate::DeviceRef,
-        buffer_size: u64,
+        size: u64,
         usage: crate::BufferUsageFlags,
         properties: crate::MemoryPropertyFlags,
     ) -> Result<Self> {
@@ -30,7 +43,7 @@ impl Buffer {
          * Create the buffer
          */
         let create_info = vk::BufferCreateInfo::default()
-            .size(buffer_size)
+            .size(size)
             .usage(usage)
             .sharing_mode(vk::SharingMode::EXCLUSIVE);
 
@@ -69,19 +82,27 @@ impl Buffer {
             device: device.clone(),
             buffer,
             memory,
+            size,
+            usage,
+            properties,
         });
     }
 
-    pub fn new_vertex_buffer<T>(device: &crate::DeviceRef, data: &[T]) -> Result<Self>
+    /// Create the buffer with data by mapping buffer and writing to it
+    /// (making it HOST_VISIBLE)
+    ///
+    /// * `device`: logical device to use to create buffer
+    /// * `data`: data to write to the buffer
+    pub fn new_data<T>(device: &crate::DeviceRef, data: &[T]) -> Result<Self>
     where
-        T: crate::Vertex,
+        T: Copy,
     {
         let buffer_size = size_of_val(data) as u64;
 
         /*
          * Create and allocate buffer
          */
-        let res = Self::new(
+        let buffer = Self::new(
             device,
             buffer_size,
             crate::BufferUsageFlags::VERTEX_BUFFER,
@@ -91,34 +112,28 @@ impl Buffer {
         /*
          * Map the memory
          */
-        let data_ptr =
-            unsafe { device.map_memory(res.memory, 0, buffer_size, vk::MemoryMapFlags::empty())? };
+        let data_ptr = unsafe {
+            device.map_memory(buffer.memory, 0, buffer_size, vk::MemoryMapFlags::empty())?
+        };
 
         /*
          * Write the data to the mapped memory
          */
-        let src_slice: &[i8] =
-            unsafe { std::slice::from_raw_parts(data.as_ptr().cast(), buffer_size as usize) };
-        let dst_slice: &mut [i8] =
-            unsafe { std::slice::from_raw_parts_mut(data_ptr.cast(), buffer_size as usize) };
-
-        assert!(src_slice.len() == dst_slice.len());
-
-        for (&src, dst) in src_slice.iter().zip(dst_slice.iter_mut()) {
-            *dst = src;
+        unsafe {
+            std::ptr::copy_nonoverlapping(data.as_ptr().cast(), data_ptr, buffer_size as usize);
         }
 
         /*
          * Unmap
          */
         unsafe {
-            device.unmap_memory(res.memory);
+            device.unmap_memory(buffer.memory);
         }
 
-        return Ok(res);
+        return Ok(buffer);
     }
 
-    pub fn destroy(&self) {
+    pub fn free(&self) {
         unsafe {
             self.device.free_memory(self.memory, None);
             self.device.destroy_buffer(self.buffer, None);
