@@ -26,7 +26,8 @@ impl Buffer {
     where
         T: super::Vertex,
     {
-        let buffer = crate::Buffer::new_data(device, data)?;
+        let buffer =
+            crate::Buffer::new_staged(device, data, crate::BufferUsageFlags::VERTEX_BUFFER)?;
 
         return Ok(Buffer {
             buffer,

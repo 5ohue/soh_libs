@@ -3,7 +3,7 @@
 mod imp;
 //-----------------------------------------------------------------------------
 
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use ash::vk;
 
 pub enum MsgSeverity {

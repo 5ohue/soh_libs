@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use ash::{vk, Entry};
 use std::ffi::CStr;
 
@@ -42,9 +42,15 @@ impl Instance {
         #[cfg(feature = "log")]
         soh_log::log_info!("Creating instance");
 
-        // TODO: make it more cross platform
+        /*
+         * Load the vulkan library
+         * TODO: make it more cross platform
+         */
         let entry = unsafe { Entry::load_from("/usr/lib/libvulkan.so")? };
 
+        /*
+         * Get the required extensions and layers
+         */
         let required_extensions = Self::get_sdl2_extensions(window)?;
         let required_layers = Self::get_validation_layers(&entry)?;
 
@@ -66,18 +72,9 @@ impl Instance {
             }
         }
 
-        let mut create_info = vk::InstanceCreateInfo::default()
-            .application_info(app_info)
-            .enabled_layer_names(&required_layers)
-            .enabled_extension_names(&required_extensions);
-
-        let mut opt_debug_utils_create_info = crate::debug::Messenger::create_info();
-        if let Some(ref mut debug_utils_create_info) = opt_debug_utils_create_info {
-            #[cfg(feature = "log")]
-            soh_log::log_debug!("Using validation layers to debug instance creation!");
-            create_info = create_info.push_next(debug_utils_create_info);
-        }
-
+        /*
+         * Check if required extensions are supported
+         */
         let supported_extensions = unsafe { entry.enumerate_instance_extension_properties(None)? };
         for &required_ext in required_extensions.iter() {
             let r_name = unsafe { CStr::from_ptr(required_ext) };
@@ -93,6 +90,22 @@ impl Instance {
             }
 
             anyhow::ensure!(found, "Extension {:?} not supported!", r_name);
+        }
+
+        /*
+         * Create instance
+         */
+        let mut create_info = vk::InstanceCreateInfo::default()
+            .application_info(app_info)
+            .enabled_layer_names(&required_layers)
+            .enabled_extension_names(&required_extensions);
+
+        // Use debug messenger if it is used
+        let mut opt_debug_utils_create_info = crate::debug::Messenger::create_info();
+        if let Some(ref mut debug_utils_create_info) = opt_debug_utils_create_info {
+            #[cfg(feature = "log")]
+            soh_log::log_debug!("Using validation layers to debug instance creation!");
+            create_info = create_info.push_next(debug_utils_create_info);
         }
 
         let instance = unsafe { entry.create_instance(&create_info, None)? };

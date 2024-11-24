@@ -93,7 +93,11 @@ impl Buffer {
     ///
     /// * `device`: logical device to use to create buffer
     /// * `data`: data to write to the buffer
-    pub fn new_data<T>(device: &crate::DeviceRef, data: &[T]) -> Result<Self>
+    pub fn new_mapped<T>(
+        device: &crate::DeviceRef,
+        data: &[T],
+        usage: crate::BufferUsageFlags,
+    ) -> Result<Self>
     where
         T: Copy,
     {
@@ -105,7 +109,7 @@ impl Buffer {
         let buffer = Self::new(
             device,
             buffer_size,
-            crate::BufferUsageFlags::VERTEX_BUFFER,
+            usage,
             crate::MemoryPropertyFlags::HOST_VISIBLE | crate::MemoryPropertyFlags::HOST_COHERENT,
         )?;
 
@@ -129,6 +133,42 @@ impl Buffer {
         unsafe {
             device.unmap_memory(buffer.memory);
         }
+
+        return Ok(buffer);
+    }
+
+    pub fn new_staged<T>(
+        device: &crate::DeviceRef,
+        data: &[T],
+        usage: crate::BufferUsageFlags,
+    ) -> Result<Self>
+    where
+        T: Copy,
+    {
+        /*
+         * Create staging buffer (a host visible buffer with data written to it)
+         */
+        let staging_buffer = Self::new_mapped(device, data, crate::BufferUsageFlags::TRANSFER_SRC)?;
+
+        /*
+         * Create the result buffer (device local)
+         */
+        let buffer = Self::new(
+            device,
+            staging_buffer.size(),
+            usage,
+            crate::MemoryPropertyFlags::DEVICE_LOCAL,
+        )?;
+
+        /*
+         * Copy from staging buffer to the result
+         */
+        todo!();
+
+        /*
+         * Free the staging buffer
+         */
+        staging_buffer.free();
 
         return Ok(buffer);
     }
