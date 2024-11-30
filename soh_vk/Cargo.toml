@@ -5,15 +5,12 @@ edition.workspace = true
 
 [dependencies]
 soh_vk_derive = { path = "./soh_vk_derive" }
-soh_log = { workspace = true, optional = true }
+soh_log = { workspace = true }
 soh_math = { workspace = true }
 anyhow = { workspace = true }
 ash = { workspace = true }
 sdl2 = { workspace = true }
 shaderc = { version = "<1.0", features = [ "build-from-source" ] }
-
-[features]
-log = [ "dep:soh_log" ]
 
 [lints]
 workspace = true

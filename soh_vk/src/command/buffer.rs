@@ -23,7 +23,7 @@ impl Buffer {
 
     pub fn record(
         &self,
-        image_index: usize,
+        render_pass: &crate::RenderPass,
         framebuffer: &crate::Framebuffer,
         graphics_pipeline: &crate::Pipeline,
         vertex_buffer: &crate::vertex::Buffer,
@@ -43,8 +43,8 @@ impl Buffer {
             },
         }];
         let render_pass_info = vk::RenderPassBeginInfo::default()
-            .render_pass(**framebuffer.render_pass())
-            .framebuffer(framebuffer[image_index])
+            .render_pass(**render_pass)
+            .framebuffer(**framebuffer)
             .render_area(vk::Rect2D {
                 offset: vk::Offset2D { x: 0, y: 0 },
                 extent: framebuffer.extent(),
@@ -136,7 +136,7 @@ impl Buffer {
 
         // This means that the pipeline is going to wait for the color attachment to be available
         // ( so that GPU can run vertex shader before the image is available for example )
-        let wait_stages = std::slice::from_ref(&vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT);
+        let wait_stages = &[vk::PipelineStageFlags::COLOR_ATTACHMENT_OUTPUT];
 
         let submit_info = vk::SubmitInfo::default()
             .wait_semaphores(std::slice::from_ref(wait_semaphore))

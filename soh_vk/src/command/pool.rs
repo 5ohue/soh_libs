@@ -10,10 +10,6 @@ pub struct Pool {
 
 // Getters
 impl Pool {
-    pub fn command_pool(&self) -> vk::CommandPool {
-        return self.command_pool;
-    }
-
     pub fn queue_family_index(&self) -> u32 {
         return self.queue_family_index;
     }
@@ -21,30 +17,38 @@ impl Pool {
 
 // Constructor, destructor
 impl Pool {
-    pub fn new(device: &crate::DeviceRef, queue_family_index: u32) -> Result<Self> {
+    /// Creates a command pool that is used to do graphics operations
+    pub fn new_graphics(device: &crate::DeviceRef) -> Result<Self> {
+        let graphics_family = device.physical().queue_family_indices().graphics_family;
+
         let create_info = vk::CommandPoolCreateInfo::default()
             .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
-            .queue_family_index(queue_family_index);
+            .queue_family_index(graphics_family);
 
         let command_pool = unsafe { device.create_command_pool(&create_info, None)? };
 
         return Ok(Pool {
             device: device.clone(),
             command_pool,
-            queue_family_index,
+            queue_family_index: graphics_family,
         });
     }
 
-    pub fn new_graphics(device: &crate::DeviceRef) -> Result<Self> {
-        let graphics_family = device.physical().queue_family_indices().graphics_family;
-
-        return Self::new(device, graphics_family);
-    }
-
+    /// Creates a command pool that is used to do data transfers
     pub fn new_transfer(device: &crate::DeviceRef) -> Result<Self> {
         let transfer_family = device.physical().queue_family_indices().transfer_family;
 
-        return Self::new(device, transfer_family);
+        let create_info = vk::CommandPoolCreateInfo::default()
+            .flags(vk::CommandPoolCreateFlags::TRANSIENT)
+            .queue_family_index(transfer_family);
+
+        let command_pool = unsafe { device.create_command_pool(&create_info, None)? };
+
+        return Ok(Pool {
+            device: device.clone(),
+            command_pool,
+            queue_family_index: transfer_family,
+        });
     }
 
     pub fn destroy(&self) {

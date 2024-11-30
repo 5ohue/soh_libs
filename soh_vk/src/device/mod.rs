@@ -56,7 +56,6 @@ impl Device {
 // Constructor, destructor
 impl Device {
     pub fn new(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<DeviceRef> {
-        #[cfg(feature = "log")]
         soh_log::log_info!("Creating logical device");
 
         /*
@@ -127,7 +126,6 @@ impl Device {
 // Drop
 impl Drop for Device {
     fn drop(&mut self) {
-        #[cfg(feature = "log")]
         soh_log::log_info!(
             "Destroying logical device \"{}\"",
             self.physical.info().name

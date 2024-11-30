@@ -17,6 +17,7 @@ pub struct PhysicalDeviceInfo {
     pub name: String,
     pub memory_props: vk::PhysicalDeviceMemoryProperties,
     pub device_props: vk::PhysicalDeviceProperties,
+    pub features: vk::PhysicalDeviceFeatures,
 
     pub queue_family_indices: QueueFamilyIndices,
 }
@@ -61,9 +62,9 @@ impl Device {
          */
         let devices = unsafe { instance.enumerate_physical_devices()? };
 
-        #[cfg(feature = "log")]
         {
             soh_log::log_info!("Available {} devices:", devices.len());
+
             devices.iter().enumerate().for_each(|(idx, &device)| {
                 soh_log::log_info!(
                     "    Device {}: \"{}\"",
@@ -91,9 +92,9 @@ impl Device {
             "Coudn't find suitable physical device"
         );
 
-        #[cfg(feature = "log")]
         {
             soh_log::log_info!("Found {} suitable devices:", suitable_devices.len());
+
             suitable_devices.iter().for_each(|(idx, &device)| {
                 soh_log::log_info!(
                     "    Device {}: \"{}\"",
@@ -112,7 +113,6 @@ impl Device {
         let gpu_info =
             PhysicalDeviceInfo::query_info(instance, *selected_device.1, surface).unwrap();
 
-        #[cfg(feature = "log")]
         {
             soh_log::log_info!("Choose GPU {}", selected_device.0);
             soh_log::log_debug!("GPU Info: \"{:#?}\"", gpu_info);
@@ -207,13 +207,9 @@ impl Device {
             PhysicalDeviceInfo::query_info(instance, physical_device, surface),
             PhysicalDeviceInfo::query_swapchain_support_info(instance, physical_device, surface),
         ) else {
-            #[cfg(feature = "log")]
-            {
-                let gpu_name =
-                    PhysicalDeviceInfo::query_gpu_name(instance, physical_device).unwrap();
+            let gpu_name = PhysicalDeviceInfo::query_gpu_name(instance, physical_device).unwrap();
 
-                soh_log::log_warning!("Failed to get information about device \"{}\"!", gpu_name);
-            }
+            soh_log::log_warning!("Failed to get information about device \"{}\"!", gpu_name);
 
             // If failed to get info, the device is probably not suitable
             return false;
@@ -240,6 +236,7 @@ impl PhysicalDeviceInfo {
             name: Self::query_gpu_name(instance, physical_device)?,
             memory_props: Self::query_memory_properties(instance, physical_device),
             device_props: Self::query_device_properties(instance, physical_device),
+            features: Self::query_device_features(instance, physical_device),
 
             queue_family_indices: Self::find_queue_families(instance, physical_device, surface)?,
         });
@@ -270,6 +267,13 @@ impl PhysicalDeviceInfo {
         physical_device: vk::PhysicalDevice,
     ) -> vk::PhysicalDeviceProperties {
         return unsafe { instance.get_physical_device_properties(physical_device) };
+    }
+
+    fn query_device_features(
+        instance: &crate::Instance,
+        physical_device: vk::PhysicalDevice,
+    ) -> vk::PhysicalDeviceFeatures {
+        return unsafe { instance.get_physical_device_features(physical_device) };
     }
 
     fn find_queue_families(

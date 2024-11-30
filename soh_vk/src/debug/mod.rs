@@ -47,22 +47,17 @@ pub struct Messenger {
 // Constructor, destructor
 impl Messenger {
     pub fn new(instance: &crate::InstanceRef) -> Result<Self> {
+        use soh_log::LogError;
+
         anyhow::ensure!(
             crate::Instance::are_validation_layers_enabled(),
             "Cannot create debug messenger! Validation layers are not enabled"
         );
 
-        #[cfg(feature = "log")]
-        use soh_log::LogError;
-
         let instance_debug = instance.instance_debug_utils();
 
-        #[cfg(feature = "log")]
         let create_info = Self::create_info()
             .expect_log("`setup_debug_messenger` must be called before `DebugMessenger::new()`");
-        #[cfg(not(feature = "log"))]
-        let create_info = Self::create_info()
-            .expect("`setup_debug_messenger` must be called before `DebugMessenger::new()`");
 
         let messenger = unsafe { instance_debug.create_debug_utils_messenger(&create_info, None)? };
 

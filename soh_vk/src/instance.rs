@@ -1,10 +1,10 @@
 use anyhow::Result;
-use ash::{vk, Entry};
+use ash::vk;
 use std::ffi::CStr;
 
 pub struct Instance {
     instance: ash::Instance,
-    entry: Entry,
+    entry: ash::Entry,
 
     // EXT, KHR instances
     instance_debug_utils: ash::ext::debug_utils::Instance,
@@ -16,7 +16,7 @@ pub type InstanceRef = std::rc::Rc<Instance>;
 
 // Getters
 impl Instance {
-    pub fn entry(&self) -> &Entry {
+    pub fn entry(&self) -> &ash::Entry {
         return &self.entry;
     }
 
@@ -39,14 +39,13 @@ impl Instance {
         app_info: &vk::ApplicationInfo,
         window: &sdl2::video::Window,
     ) -> Result<InstanceRef> {
-        #[cfg(feature = "log")]
         soh_log::log_info!("Creating instance");
 
         /*
          * Load the vulkan library
          * TODO: make it more cross platform
          */
-        let entry = unsafe { Entry::load_from("/usr/lib/libvulkan.so")? };
+        let entry = unsafe { ash::Entry::load_from("/usr/lib/libvulkan.so")? };
 
         /*
          * Get the required extensions and layers
@@ -55,9 +54,9 @@ impl Instance {
         let required_layers = Self::get_validation_layers(&entry)?;
 
         // Log stuff
-        #[cfg(feature = "log")]
         {
             soh_log::log_info!("Required {} extensions", required_extensions.len());
+
             for &required_ext in required_extensions.iter() {
                 let r_name = unsafe { CStr::from_ptr(required_ext) };
 
@@ -103,7 +102,6 @@ impl Instance {
         // Use debug messenger if it is used
         let mut opt_debug_utils_create_info = crate::debug::Messenger::create_info();
         if let Some(ref mut debug_utils_create_info) = opt_debug_utils_create_info {
-            #[cfg(feature = "log")]
             soh_log::log_debug!("Using validation layers to debug instance creation!");
             create_info = create_info.push_next(debug_utils_create_info);
         }
@@ -126,7 +124,6 @@ impl Instance {
 // Drop
 impl Drop for Instance {
     fn drop(&mut self) {
-        #[cfg(feature = "log")]
         soh_log::log_info!("Destroying instance");
 
         unsafe { self.instance.destroy_instance(None) };
@@ -135,36 +132,41 @@ impl Drop for Instance {
 
 // Specific implementation
 impl Instance {
-    fn get_validation_layers(entry: &Entry) -> Result<Vec<*const i8>> {
-        const VALIDATION_LAYERS: &[&std::ffi::CStr] = &[c"VK_LAYER_KHRONOS_validation"];
+    fn get_validation_layers(entry: &ash::Entry) -> Result<Vec<*const i8>> {
+        const REQUIRED_VALIDATION_LAYERS: &[&std::ffi::CStr] = &[c"VK_LAYER_KHRONOS_validation"];
 
         if !Self::are_validation_layers_enabled() {
             return Ok(vec![]);
         }
 
-        // Get available layers
+        /*
+         * Get available layers
+         */
         let available_layers = unsafe { entry.enumerate_instance_layer_properties()? };
 
-        // Check if our validation layers are available
-        let mut res = Vec::new();
+        return Ok(REQUIRED_VALIDATION_LAYERS
+            .iter()
+            .filter_map(|&r_name| {
+                /*
+                 * Check if the required validation layer is available
+                 */
+                let mut found = false;
 
-        for &r_name in VALIDATION_LAYERS {
-            let mut found = false;
-            for available_layer in available_layers.iter() {
-                let a_name = available_layer.layer_name_as_c_str()?;
+                for available_layer in available_layers.iter() {
+                    let a_name = available_layer.layer_name_as_c_str().unwrap();
 
-                if r_name == a_name {
-                    found = true;
-                    break;
+                    if r_name == a_name {
+                        found = true;
+                        break;
+                    }
                 }
-            }
 
-            if found {
-                res.push(r_name.as_ptr());
-            }
-        }
-
-        return Ok(res);
+                if found {
+                    return Some(r_name.as_ptr());
+                }
+                return None;
+            })
+            .collect());
     }
 
     /// Gets the extensions needed to create a vk surface

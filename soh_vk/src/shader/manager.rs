@@ -125,7 +125,6 @@ impl Manager {
 
             #[allow(unused)]
             let _ = self.compile_shader(&path).inspect_err(|err| {
-                #[cfg(feature = "log")]
                 soh_log::log_warning!("Failed to precompile shaders: {}", err);
             });
         }
@@ -137,7 +136,6 @@ impl Manager {
         // Check the filename and deduce the shader kind
         fn deduce_shader_kind(path: &Path) -> shaderc::ShaderKind {
             let Some(ext) = path.extension() else {
-                #[cfg(feature = "log")]
                 soh_log::log_warning!("Couldn't deduce shader type for file \"{}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path.display());
                 return shaderc::ShaderKind::InferFromSource;
             };
@@ -147,7 +145,6 @@ impl Manager {
             } else if ext == "frag" {
                 return shaderc::ShaderKind::Fragment;
             } else {
-                #[cfg(feature = "log")]
                 soh_log::log_warning!("Couldn't deduce shader type for file \"{}\". Defaulting to \"shaderc::ShaderKind::InferFromSource\"", path.display());
                 return shaderc::ShaderKind::InferFromSource;
             }
@@ -161,7 +158,6 @@ impl Manager {
             let bin_file_path = Manager::get_binary_filename(path).unwrap();
             let data = artifact.as_binary_u8();
 
-            #[cfg(feature = "log")]
             soh_log::log_info!("Saving shader {:?}", bin_file_path);
 
             // let file = std::fs::OpenOptions::new().read(true).
@@ -177,7 +173,6 @@ impl Manager {
             );
         }
 
-        #[cfg(feature = "log")]
         soh_log::log_info!("Compiling shader \"{}\"", path.display());
 
         let shader_kind = deduce_shader_kind(path);
@@ -204,7 +199,6 @@ impl Manager {
     }
 
     fn load_from_file<T: AsRef<Path>>(&self, path: T) -> Result<Vec<u32>> {
-        #[cfg(feature = "log")]
         soh_log::log_info!(
             "Loading precompiled shader: \"{}\"",
             path.as_ref().display()
@@ -217,7 +211,6 @@ impl Manager {
         .into();
 
         if u32_data[0] != 0x07230203 {
-            #[cfg(feature = "log")]
             soh_log::log_error!(
                 "First byte isn't `0x07230203`, it is `{:#x}` instead",
                 u32_data[0]

@@ -31,14 +31,12 @@ impl Swapchain {
         surface: &crate::Surface,
         window_size: (u32, u32),
     ) -> Result<Self> {
-        #[cfg(feature = "log")]
         soh_log::log_debug!("Creating swapchain for window size {:?}", window_size);
 
         return Self::create_swapchain(device, surface, window_size, None);
     }
 
     pub fn recreate(&mut self, surface: &crate::Surface, window_size: (u32, u32)) -> Result<()> {
-        #[cfg(feature = "log")]
         soh_log::log_debug!("Rereating swapchain for window size {:?}", window_size);
 
         // let new_swapchain = Self::create_swapchain(&self.device, surface, window_size, Some(self))?;
@@ -181,7 +179,6 @@ impl Swapchain {
             }
         }
 
-        #[cfg(feature = "log")]
         soh_log::log_warning!(
             "Couldn't find desired surface format! Defaulting to {:?}",
             available_formats[0]

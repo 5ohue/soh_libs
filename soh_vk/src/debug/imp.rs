@@ -51,14 +51,7 @@ pub extern "system" fn debug_messenger_callback(
     let Ok(message_str) = msg.to_str() else {
         let utf8_err = "Failed to convert validation layer message: UTF8 error";
 
-        #[cfg(feature = "log")]
-        {
-            soh_log::log_error!("{utf8_err}");
-        }
-        #[cfg(not(feature = "log"))]
-        {
-            eprintln!("{utf8_err}");
-        }
+        soh_log::log_error!("{utf8_err}");
 
         return vk::FALSE;
     };
