@@ -127,12 +127,7 @@ impl Buffer {
         signal_semaphore: &crate::sync::Semaphore,
         fence: Option<&crate::sync::Fence>,
     ) -> Result<()> {
-        let queue = self.device.get_queue(self.queue_family_index);
-
-        // Cannot submit to null queue
-        debug_assert!(!queue.is_null());
-        // Only submit primary buffers
-        debug_assert_eq!(self.level, super::BufferLevel::Primary);
+        let queue = self.get_queue_handle();
 
         // This means that the pipeline is going to wait for the color attachment to be available
         // ( so that GPU can run vertex shader before the image is available for example )
@@ -154,6 +149,23 @@ impl Buffer {
         return Ok(());
     }
 
+    pub fn submit_and_wait(&self) -> Result<()> {
+        let queue = self.get_queue_handle();
+
+        let submit_info = vk::SubmitInfo::default().command_buffers(std::slice::from_ref(self));
+
+        unsafe {
+            self.device.queue_submit(
+                queue,
+                std::slice::from_ref(&submit_info),
+                vk::Fence::null(),
+            )?;
+            self.device.queue_wait_idle(queue)?;
+        }
+
+        return Ok(());
+    }
+
     #[inline(always)]
     pub(super) fn from_handle(
         device: crate::DeviceRef,
@@ -169,6 +181,17 @@ impl Buffer {
             level,
             queue_family_index,
         };
+    }
+
+    fn get_queue_handle(&self) -> vk::Queue {
+        let queue = self.device.get_queue(self.queue_family_index);
+
+        // Cannot submit to null queue
+        debug_assert!(!queue.is_null());
+        // Only submit primary buffers
+        debug_assert_eq!(self.level, super::BufferLevel::Primary);
+
+        return queue;
     }
 }
 

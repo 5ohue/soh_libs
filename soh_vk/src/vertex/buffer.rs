@@ -22,12 +22,16 @@ impl Buffer {
 
 // Constructor, destructor
 impl Buffer {
-    pub fn new<T>(device: &crate::DeviceRef, data: &[T]) -> Result<Self>
+    pub fn new<T>(context: &crate::VulkanContext, data: &[T]) -> Result<Self>
     where
         T: super::Vertex,
     {
-        let buffer =
-            crate::Buffer::new_mapped(device, data, crate::BufferUsageFlags::VERTEX_BUFFER)?;
+        let buffer = crate::Buffer::new_staged(
+            context.device(),
+            unsafe { context.transfer_command_pool() },
+            data,
+            crate::BufferUsageFlags::VERTEX_BUFFER,
+        )?;
 
         return Ok(Buffer {
             buffer,

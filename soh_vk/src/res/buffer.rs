@@ -139,6 +139,7 @@ impl Buffer {
 
     pub fn new_staged<T>(
         device: &crate::DeviceRef,
+        pool: &crate::command::Pool,
         data: &[T],
         usage: crate::BufferUsageFlags,
     ) -> Result<Self>
@@ -156,14 +157,14 @@ impl Buffer {
         let buffer = Self::new(
             device,
             staging_buffer.size(),
-            usage,
+            usage | crate::BufferUsageFlags::TRANSFER_DST,
             crate::MemoryPropertyFlags::DEVICE_LOCAL,
         )?;
 
         /*
          * Copy from staging buffer to the result
          */
-        todo!();
+        super::copy_buffer(device, pool, &staging_buffer, &buffer)?;
 
         /*
          * Free the staging buffer
