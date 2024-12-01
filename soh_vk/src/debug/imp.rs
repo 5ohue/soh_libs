@@ -1,33 +1,18 @@
 //-----------------------------------------------------------------------------
+use super::MessengerCallback;
 use ash::vk;
 //-----------------------------------------------------------------------------
-pub type MessengerCallback = Box<dyn Fn(&super::CallbackArgs<'_>) -> bool + Send + Sync>;
+static SINGLETON: std::sync::OnceLock<MessengerCallback> = std::sync::OnceLock::new();
 //-----------------------------------------------------------------------------
-// Points to a leaked instance of `DebugMessengerDataInner` (singleton)
-#[repr(transparent)]
-pub struct MessengerData {
-    callback: MessengerCallback,
+
+pub fn setup(callback: MessengerCallback) {
+    SINGLETON.get_or_init(|| {
+        return callback;
+    });
 }
 
-//-----------------------------------------------------------------------------
-static SINGLETON: std::sync::OnceLock<MessengerData> = std::sync::OnceLock::new();
-//-----------------------------------------------------------------------------
-
-impl MessengerData {
-    pub fn setup<F>(callback: F)
-    where
-        F: Fn(&super::CallbackArgs<'_>) -> bool + Send + Sync + 'static,
-    {
-        SINGLETON.get_or_init(|| {
-            return MessengerData {
-                callback: Box::new(callback),
-            };
-        });
-    }
-
-    pub fn get() -> Option<&'static MessengerData> {
-        return SINGLETON.get();
-    }
+pub fn get() -> Option<&'static MessengerCallback> {
+    return SINGLETON.get();
 }
 
 //-----------------------------------------------------------------------------
@@ -38,12 +23,18 @@ pub extern "system" fn debug_messenger_callback(
     p_callback_data: *const vk::DebugUtilsMessengerCallbackDataEXT<'_>,
     p_user_data: *mut std::ffi::c_void,
 ) -> vk::Bool32 {
+    /*
+     * Get callback data
+     */
     if p_callback_data.is_null() {
         return vk::FALSE;
     }
 
     let callback_data = unsafe { &*p_callback_data };
 
+    /*
+     * Get message ( as &str )
+     */
     let Some(msg) = (unsafe { callback_data.message_as_c_str() }) else {
         return vk::FALSE;
     };
@@ -56,15 +47,21 @@ pub extern "system" fn debug_messenger_callback(
         return vk::FALSE;
     };
 
+    /*
+     * Compile args
+     */
     let args = super::CallbackArgs {
         message_severity: message_severity.into(),
         message_type: message_type.into(),
         message_str,
     };
 
-    let data: &MessengerData = unsafe { &*(p_user_data.cast()) };
+    /*
+     * Get the user's callback and call it
+     */
+    let callback: &MessengerCallback = unsafe { &*(p_user_data.cast()) };
 
-    return (data.callback)(&args).into();
+    return callback(args).into();
 }
 
 //-----------------------------------------------------------------------------

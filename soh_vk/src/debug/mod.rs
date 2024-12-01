@@ -28,13 +28,12 @@ pub struct CallbackArgs<'a> {
 }
 
 //-----------------------------------------------------------------------------
+pub type MessengerCallback = fn(crate::debug::CallbackArgs<'_>) -> bool;
+//-----------------------------------------------------------------------------
 /// This functions sets up the debug messenger callback. This function must be
 /// called before calling `[DebugMessenger::new]`.
-pub fn setup_messenger<F>(callback: F)
-where
-    F: Fn(&CallbackArgs<'_>) -> bool + Send + Sync + 'static,
-{
-    imp::MessengerData::setup(callback);
+pub fn setup_messenger(callback: MessengerCallback) {
+    imp::setup(callback);
 }
 
 //-----------------------------------------------------------------------------
@@ -78,10 +77,10 @@ impl Messenger {
 // Specific implementation
 impl Messenger {
     pub(crate) fn create_info() -> Option<vk::DebugUtilsMessengerCreateInfoEXT<'static>> {
-        let data = imp::MessengerData::get()?;
+        let data = imp::get()?;
 
         // mut casting is OK here because in data isn't mutated in debug callback
-        let data_ptr = (data as *const imp::MessengerData).cast_mut().cast();
+        let data_ptr = (data as *const MessengerCallback).cast_mut().cast();
 
         let create_info = vk::DebugUtilsMessengerCreateInfoEXT::default()
             .message_severity(

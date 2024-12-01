@@ -9,7 +9,7 @@ pub struct ContextBootstrapInfo<'a> {
      */
     pub app_name: &'a str,
     pub app_version: (u32, u32, u32),
-    pub debug_messenger_callback: fn(&crate::debug::CallbackArgs<'_>) -> bool,
+    pub debug_messenger_callback: crate::debug::MessengerCallback,
 
     /*
      * Window
