@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk::{self, Handle};
+//-----------------------------------------------------------------------------
 
 pub struct Buffer {
     device: crate::DeviceRef,
@@ -9,37 +11,49 @@ pub struct Buffer {
     queue_family_index: u32,
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Buffer {
     pub fn reset(&self) -> Result<()> {
         unsafe {
             self.device
-                .reset_command_buffer(self.cmd_buffer, vk::CommandBufferResetFlags::default())?;
+                .reset_command_buffer(**self, vk::CommandBufferResetFlags::default())?;
         }
         return Ok(());
     }
 
-    pub fn record(
-        &self,
-        render_pass: &crate::RenderPass,
-        framebuffer: &crate::Framebuffer,
-        graphics_pipeline: &crate::Pipeline,
-        vertex_buffer: &crate::vertex::Buffer,
-    ) -> Result<()> {
-        /*
-         * Begin command buffer
-         */
-        let begin_info = vk::CommandBufferBeginInfo::default();
+    /**************************************************************************
+     *                          Recording functions                           *
+     **************************************************************************/
+
+    pub fn begin(&self, flags: vk::CommandBufferUsageFlags) -> Result<()> {
+        let begin_info = vk::CommandBufferBeginInfo::default().flags(flags);
+
         unsafe { self.device.begin_command_buffer(**self, &begin_info)? };
 
-        /*
-         * Starting a render pass
-         */
-        let clear_values = [vk::ClearValue {
+        return Ok(());
+    }
+
+    pub fn end(&self) -> Result<()> {
+        unsafe {
+            self.device.end_command_buffer(**self)?;
+        }
+        return Ok(());
+    }
+
+    //-------------------------------------------------------------------------
+
+    pub fn begin_render_pass(
+        &self,
+        framebuffer: &crate::Framebuffer,
+        render_pass: &crate::RenderPass,
+    ) {
+        static CLEAR_VALUE: vk::ClearValue = vk::ClearValue {
             color: vk::ClearColorValue {
                 float32: [0.0, 0.0, 0.0, 1.0],
             },
-        }];
+        };
+
         let render_pass_info = vk::RenderPassBeginInfo::default()
             .render_pass(**render_pass)
             .framebuffer(**framebuffer)
@@ -47,72 +61,80 @@ impl Buffer {
                 offset: vk::Offset2D { x: 0, y: 0 },
                 extent: framebuffer.extent(),
             })
-            .clear_values(&clear_values);
+            .clear_values(std::slice::from_ref(&CLEAR_VALUE));
+
         unsafe {
             self.device.cmd_begin_render_pass(
-                self.cmd_buffer,
+                **self,
                 &render_pass_info,
                 vk::SubpassContents::INLINE,
             );
         }
+    }
 
-        /*
-         * Bind the pipeline
-         */
+    pub fn end_render_pass(&self) {
+        unsafe {
+            self.device.cmd_end_render_pass(**self);
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    pub fn set_fb_viewport_scissor(&self, framebuffer: &crate::Framebuffer) {
+        let (viewport, scissor) = framebuffer.get_viewport_scissor();
+
+        unsafe {
+            self.device
+                .cmd_set_viewport(**self, 0, std::slice::from_ref(&viewport));
+            self.device
+                .cmd_set_scissor(**self, 0, std::slice::from_ref(&scissor));
+        }
+    }
+
+    //-------------------------------------------------------------------------
+
+    pub fn bind_pipeline(&self, graphics_pipeline: &crate::Pipeline) {
         unsafe {
             self.device.cmd_bind_pipeline(
-                self.cmd_buffer,
+                **self,
                 vk::PipelineBindPoint::GRAPHICS,
                 **graphics_pipeline,
             );
         }
+    }
 
-        /*
-         * Bind the vertex buffer
-         */
+    pub fn bind_vertex_buffer(&self, vertex_buffer: &crate::vertex::Buffer) {
         unsafe {
             self.device.cmd_bind_vertex_buffers(
-                self.cmd_buffer,
+                **self,
                 0,
                 &[vertex_buffer.buffer().buffer()],
                 &[0],
             );
         }
+    }
 
-        /*
-         * Dynamic state
-         */
-        let (viewport, scissor) = framebuffer.get_viewport_scissor();
-        unsafe {
-            self.device
-                .cmd_set_viewport(self.cmd_buffer, 0, std::slice::from_ref(&viewport));
-            self.device
-                .cmd_set_scissor(self.cmd_buffer, 0, std::slice::from_ref(&scissor));
-        }
-
-        /*
-         * Actually draw
-         */
+    pub fn draw(
+        &self,
+        vertex_count: u32,
+        instance_count: u32,
+        first_vertex: u32,
+        first_instance: u32,
+    ) {
         unsafe {
             self.device.cmd_draw(
-                self.cmd_buffer,
-                vertex_buffer.num_of_vertexes() as u32,
-                1,
-                0,
-                0,
+                **self,
+                vertex_count,
+                instance_count,
+                first_vertex,
+                first_instance,
             );
         }
-
-        /*
-         * End the render pass
-         */
-        unsafe {
-            self.device.cmd_end_render_pass(self.cmd_buffer);
-            self.device.end_command_buffer(self.cmd_buffer)?;
-        }
-
-        return Ok(());
     }
+
+    /**************************************************************************
+     *                            Submit functions                            *
+     **************************************************************************/
 
     /// Submit the command buffer to the queue
     ///
@@ -193,6 +215,8 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
+
 // Deref
 impl std::ops::Deref for Buffer {
     type Target = vk::CommandBuffer;
@@ -201,3 +225,5 @@ impl std::ops::Deref for Buffer {
         return &self.cmd_buffer;
     }
 }
+
+//-----------------------------------------------------------------------------
