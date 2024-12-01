@@ -50,6 +50,9 @@ pub mod sync;
 pub mod vertex;
 pub use soh_vk_derive::Vertex;
 pub use vertex::Vertex;
+
+// Index buffer
+pub mod index;
 //-----------------------------------------------------------------------------
 
 pub enum QueueType {

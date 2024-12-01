@@ -114,6 +114,17 @@ impl Buffer {
         }
     }
 
+    pub fn bind_index_buffer(&self, index_buffer: &crate::index::Buffer) {
+        unsafe {
+            self.device.cmd_bind_index_buffer(
+                **self,
+                index_buffer.buffer().buffer(),
+                0,
+                index_buffer.index_type(),
+            );
+        }
+    }
+
     pub fn draw(
         &self,
         vertex_count: u32,
@@ -127,6 +138,26 @@ impl Buffer {
                 vertex_count,
                 instance_count,
                 first_vertex,
+                first_instance,
+            );
+        }
+    }
+
+    pub fn draw_indexed(
+        &self,
+        index_count: u32,
+        instance_count: u32,
+        first_index: u32,
+        vertex_offset: i32,
+        first_instance: u32,
+    ) {
+        unsafe {
+            self.device.cmd_draw_indexed(
+                **self,
+                index_count,
+                instance_count,
+                first_index,
+                vertex_offset,
                 first_instance,
             );
         }
