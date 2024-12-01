@@ -136,12 +136,6 @@ impl VulkanContext {
 
         crate::debug::setup_messenger(bootstrap_info.debug_messenger_callback);
 
-        let shader_manager = crate::shader::Manager::new(
-            bootstrap_info.shader_manager_mode,
-            bootstrap_info.recompile_shaders,
-            bootstrap_info.shader_directory.to_owned(),
-        )?;
-
         let instance = Self::create_instance(bootstrap_info)?;
         let debug_messenger = crate::debug::Messenger::new(&instance).ok();
 
@@ -169,6 +163,12 @@ impl VulkanContext {
         let in_flight_fences = (0..num_of_frames)
             .map(|_| crate::sync::Fence::new(&device, true).unwrap_log())
             .collect();
+
+        let shader_manager = crate::shader::Manager::new(
+            bootstrap_info.shader_manager_mode,
+            bootstrap_info.recompile_shaders,
+            bootstrap_info.shader_directory.to_owned(),
+        )?;
 
         return Ok(VulkanContext {
             instance,
@@ -250,10 +250,13 @@ impl VulkanContext {
             .acquire_next_image(Some(image_available_semaphore), None);
 
         let image_idx = match res {
-            Ok((image_index, _)) => image_index as usize,
-            Err(ash::vk::Result::ERROR_OUT_OF_DATE_KHR) => {
+            // Acquired image successfully
+            Ok((image_idx, false)) => image_idx as usize,
+            // Swapchain should be resized
+            Ok((_, true)) | Err(ash::vk::Result::ERROR_OUT_OF_DATE_KHR) => {
                 return Ok(true);
             }
+            // Error occured
             Err(e) => {
                 return Err(e.into());
             }
@@ -300,7 +303,12 @@ impl VulkanContext {
             .swapchain
             .present_image(render_finished_semaphore, image_idx as u32);
 
-        return Ok(present_result.is_err());
+        return match present_result {
+            // Need to recreate swapchain if Error or suboptimal
+            Ok(true) | Err(_) => Ok(true),
+            // Don't need to recreate swapchain
+            Ok(false) => Ok(false),
+        };
     }
 
     pub fn on_window_resize(&mut self, window_size: (u32, u32)) -> Result<()> {

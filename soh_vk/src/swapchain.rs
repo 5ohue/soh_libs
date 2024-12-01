@@ -127,6 +127,7 @@ impl Swapchain {
 
 // Specific implementation
 impl Swapchain {
+    /// On success, returns the next image's index and whether the swapchain is suboptimal for the surface.
     pub fn acquire_next_image(
         &self,
         signal_semaphore: Option<&crate::sync::Semaphore>,
@@ -142,23 +143,24 @@ impl Swapchain {
         };
     }
 
+    /// On success, returns whether the swapchain is suboptimal for the surface.
     pub fn present_image(
         &self,
         wait_semaphore: &crate::sync::Semaphore,
         image_index: u32,
-    ) -> Result<()> {
+    ) -> Result<bool> {
         let present_info = vk::PresentInfoKHR::default()
             .wait_semaphores(std::slice::from_ref(wait_semaphore))
             .swapchains(std::slice::from_ref(self))
             .image_indices(std::slice::from_ref(&image_index));
 
-        unsafe {
+        let res = unsafe {
             self.device
                 .device_swapchain()
                 .queue_present(self.device.present_queue(), &present_info)?
         };
 
-        return Ok(());
+        return Ok(res);
     }
 
     pub fn get_images(&self) -> Result<Vec<vk::Image>> {
