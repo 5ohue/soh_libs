@@ -7,8 +7,6 @@ mod framebuffer;
 mod instance;
 mod pipeline;
 mod render_pass;
-mod surface;
-mod swapchain;
 //-----------------------------------------------------------------------------
 // Public imports
 pub use device::*;
@@ -16,8 +14,6 @@ pub use framebuffer::*;
 pub use instance::*;
 pub use pipeline::*;
 pub use render_pass::*;
-pub use surface::*;
-pub use swapchain::*;
 //-----------------------------------------------------------------------------
 
 //-----------------------------------------------------------------------------
@@ -36,12 +32,16 @@ pub use shader::Shader;
 // Debug messenger
 pub mod debug;
 
+// Window system integration
+pub mod wsi;
+pub use wsi::*;
+
 // Allocated resources (buffers, images)
 pub mod res;
 pub use res::*;
 
 // Command pool and buffer
-pub mod command;
+pub mod cmd;
 
 // Synchronization promitives (fences, semaphores)
 pub mod sync;

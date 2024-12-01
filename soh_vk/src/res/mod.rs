@@ -9,14 +9,14 @@ use ash::vk;
 
 pub fn copy_buffer(
     device: &crate::Device,
-    pool: &crate::command::Pool,
+    pool: &crate::cmd::Pool,
     src: &Buffer,
     dst: &Buffer,
 ) -> Result<()> {
     /*
      * Create transfer command buffer
      */
-    let cmd_buf = pool.allocate_buffer(crate::command::BufferLevel::Primary)?;
+    let cmd_buf = pool.allocate_buffer(crate::cmd::BufferLevel::Primary)?;
 
     let begin_info =
         vk::CommandBufferBeginInfo::default().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
@@ -33,6 +33,10 @@ pub fn copy_buffer(
     }
 
     cmd_buf.submit_and_wait()?;
+
+    unsafe {
+        device.free_command_buffers(**pool, std::slice::from_ref(&cmd_buf));
+    }
 
     return Ok(());
 }

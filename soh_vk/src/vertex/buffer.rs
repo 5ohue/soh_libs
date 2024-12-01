@@ -28,7 +28,7 @@ impl Buffer {
     {
         let buffer = crate::Buffer::new_staged(
             context.device(),
-            unsafe { context.transfer_command_pool() },
+            unsafe { context.cmd_pool_transfer() },
             data,
             crate::BufferUsageFlags::VERTEX_BUFFER,
         )?;

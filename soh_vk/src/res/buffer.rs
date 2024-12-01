@@ -139,7 +139,7 @@ impl Buffer {
 
     pub fn new_staged<T>(
         device: &crate::DeviceRef,
-        pool: &crate::command::Pool,
+        pool: &crate::cmd::Pool,
         data: &[T],
         usage: crate::BufferUsageFlags,
     ) -> Result<Self>

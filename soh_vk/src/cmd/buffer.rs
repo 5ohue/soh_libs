@@ -4,7 +4,7 @@ use ash::vk::{self, Handle};
 pub struct Buffer {
     device: crate::DeviceRef,
 
-    command_buffer: vk::CommandBuffer,
+    cmd_buffer: vk::CommandBuffer,
     level: super::BufferLevel,
     queue_family_index: u32,
 }
@@ -13,10 +13,8 @@ pub struct Buffer {
 impl Buffer {
     pub fn reset(&self) -> Result<()> {
         unsafe {
-            self.device.reset_command_buffer(
-                self.command_buffer,
-                vk::CommandBufferResetFlags::default(),
-            )?;
+            self.device
+                .reset_command_buffer(self.cmd_buffer, vk::CommandBufferResetFlags::default())?;
         }
         return Ok(());
     }
@@ -52,7 +50,7 @@ impl Buffer {
             .clear_values(&clear_values);
         unsafe {
             self.device.cmd_begin_render_pass(
-                self.command_buffer,
+                self.cmd_buffer,
                 &render_pass_info,
                 vk::SubpassContents::INLINE,
             );
@@ -63,7 +61,7 @@ impl Buffer {
          */
         unsafe {
             self.device.cmd_bind_pipeline(
-                self.command_buffer,
+                self.cmd_buffer,
                 vk::PipelineBindPoint::GRAPHICS,
                 **graphics_pipeline,
             );
@@ -74,7 +72,7 @@ impl Buffer {
          */
         unsafe {
             self.device.cmd_bind_vertex_buffers(
-                self.command_buffer,
+                self.cmd_buffer,
                 0,
                 &[vertex_buffer.buffer().buffer()],
                 &[0],
@@ -87,9 +85,9 @@ impl Buffer {
         let (viewport, scissor) = framebuffer.get_viewport_scissor();
         unsafe {
             self.device
-                .cmd_set_viewport(self.command_buffer, 0, std::slice::from_ref(&viewport));
+                .cmd_set_viewport(self.cmd_buffer, 0, std::slice::from_ref(&viewport));
             self.device
-                .cmd_set_scissor(self.command_buffer, 0, std::slice::from_ref(&scissor));
+                .cmd_set_scissor(self.cmd_buffer, 0, std::slice::from_ref(&scissor));
         }
 
         /*
@@ -97,7 +95,7 @@ impl Buffer {
          */
         unsafe {
             self.device.cmd_draw(
-                self.command_buffer,
+                self.cmd_buffer,
                 vertex_buffer.num_of_vertexes() as u32,
                 1,
                 0,
@@ -109,8 +107,8 @@ impl Buffer {
          * End the render pass
          */
         unsafe {
-            self.device.cmd_end_render_pass(self.command_buffer);
-            self.device.end_command_buffer(self.command_buffer)?;
+            self.device.cmd_end_render_pass(self.cmd_buffer);
+            self.device.end_command_buffer(self.cmd_buffer)?;
         }
 
         return Ok(());
@@ -177,7 +175,7 @@ impl Buffer {
 
         return Buffer {
             device,
-            command_buffer: buffer,
+            cmd_buffer: buffer,
             level,
             queue_family_index,
         };
@@ -200,6 +198,6 @@ impl std::ops::Deref for Buffer {
     type Target = vk::CommandBuffer;
 
     fn deref(&self) -> &Self::Target {
-        return &self.command_buffer;
+        return &self.cmd_buffer;
     }
 }
