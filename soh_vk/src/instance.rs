@@ -37,7 +37,7 @@ impl Instance {
 impl Instance {
     pub fn new(
         app_info: &vk::ApplicationInfo,
-        window: &sdl2::video::Window,
+        surface_platform: crate::wsi::Platform,
     ) -> Result<InstanceRef> {
         soh_log::log_info!("Creating instance");
 
@@ -50,7 +50,7 @@ impl Instance {
         /*
          * Get the required extensions and layers
          */
-        let required_extensions = Self::get_sdl2_extensions(window)?;
+        let required_extensions = Self::get_extensions(surface_platform);
         let required_layers = Self::get_validation_layers(&entry)?;
 
         // Log stuff
@@ -58,16 +58,12 @@ impl Instance {
             soh_log::log_info!("Required {} extensions", required_extensions.len());
 
             for &required_ext in required_extensions.iter() {
-                let r_name = unsafe { CStr::from_ptr(required_ext) };
-
-                soh_log::log_info!("    {:?}", r_name);
+                soh_log::log_info!("    {:?}", required_ext);
             }
 
             soh_log::log_info!("Required {} layers", required_layers.len());
             for &required_layer in required_layers.iter() {
-                let r_layer = unsafe { CStr::from_ptr(required_layer) };
-
-                soh_log::log_info!("    {:?}", r_layer);
+                soh_log::log_info!("    {:?}", required_layer);
             }
         }
 
@@ -75,8 +71,7 @@ impl Instance {
          * Check if required extensions are supported
          */
         let supported_extensions = unsafe { entry.enumerate_instance_extension_properties(None)? };
-        for &required_ext in required_extensions.iter() {
-            let r_name = unsafe { CStr::from_ptr(required_ext) };
+        for &r_name in required_extensions.iter() {
             let mut found = false;
 
             for supported_ext in supported_extensions.iter() {
@@ -92,12 +87,18 @@ impl Instance {
         }
 
         /*
+         * Create Vec<*const i8> for the create info struct
+         */
+        let ptr_required_layers = Self::cstr_to_ptr(&required_layers);
+        let ptr_required_extensions: Vec<*const i8> = Self::cstr_to_ptr(&required_extensions);
+
+        /*
          * Create instance
          */
         let mut create_info = vk::InstanceCreateInfo::default()
             .application_info(app_info)
-            .enabled_layer_names(&required_layers)
-            .enabled_extension_names(&required_extensions);
+            .enabled_layer_names(&ptr_required_layers)
+            .enabled_extension_names(&ptr_required_extensions);
 
         // Use debug messenger if it is used
         let mut opt_debug_utils_create_info = crate::debug::Messenger::create_info();
@@ -132,8 +133,40 @@ impl Drop for Instance {
 
 // Specific implementation
 impl Instance {
-    fn get_validation_layers(entry: &ash::Entry) -> Result<Vec<*const i8>> {
-        const REQUIRED_VALIDATION_LAYERS: &[&std::ffi::CStr] = &[c"VK_LAYER_KHRONOS_validation"];
+    fn get_extensions(surface_platform: crate::wsi::Platform) -> Vec<&'static CStr> {
+        /*
+         * Require the VK_KHR_surface
+         */
+        let mut extensions = vec![ash::khr::surface::NAME];
+
+        /*
+         * Require platform specific extension
+         */
+        match surface_platform {
+            crate::wsi::Platform::Win32 => {
+                extensions.push(ash::khr::win32_surface::NAME);
+            }
+            crate::wsi::Platform::X11 => {
+                extensions.push(ash::khr::xlib_surface::NAME);
+                extensions.push(ash::khr::xcb_surface::NAME);
+            }
+            crate::wsi::Platform::Wayland => {
+                extensions.push(ash::khr::wayland_surface::NAME);
+            }
+        }
+
+        /*
+         * Require validation layer extension
+         */
+        if Self::are_validation_layers_enabled() {
+            extensions.push(ash::ext::debug_utils::NAME);
+        }
+
+        return extensions;
+    }
+
+    fn get_validation_layers(entry: &ash::Entry) -> Result<Vec<&'static CStr>> {
+        static REQUIRED_VALIDATION_LAYERS: &[&CStr] = &[c"VK_LAYER_KHRONOS_validation"];
 
         if !Self::are_validation_layers_enabled() {
             return Ok(vec![]);
@@ -162,59 +195,15 @@ impl Instance {
                 }
 
                 if found {
-                    return Some(r_name.as_ptr());
+                    return Some(r_name);
                 }
                 return None;
             })
             .collect());
     }
 
-    /// Gets the extensions needed to create a vk surface
-    fn get_sdl2_extensions(window: &sdl2::video::Window) -> Result<Vec<*const i8>> {
-        use sdl2::sys::SDL_bool::SDL_TRUE;
-
-        // Get count
-        let mut extension_count = 0;
-        let res = unsafe {
-            sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
-                window.raw(),
-                &mut extension_count,
-                std::ptr::null_mut(),
-            )
-        };
-
-        anyhow::ensure!(
-            res == SDL_TRUE,
-            "Failed to get the SDL2 instance extension count ({})",
-            sdl2::get_error()
-        );
-
-        // Get extensions
-        let mut extensions = vec![std::ptr::null(); extension_count as usize];
-        let res = unsafe {
-            sdl2::sys::SDL_Vulkan_GetInstanceExtensions(
-                window.raw(),
-                &mut extension_count,
-                extensions.as_mut_ptr(),
-            )
-        };
-
-        // Get validation layer extension
-        if Self::are_validation_layers_enabled() {
-            // Using `vk::EXT_DEBUG_UTILS_NAME` directly sounds dangerous
-            // (dangling pointer maybe??? `vk::EXT_DEBUG_UTILS_NAME` is `const`, not `static`)
-
-            static EXTENSION_NAME: &CStr = vk::EXT_DEBUG_UTILS_NAME;
-            extensions.push(EXTENSION_NAME.as_ptr());
-        }
-
-        anyhow::ensure!(
-            res == SDL_TRUE,
-            "Failed to get the SDL2 instance extensions ({})",
-            sdl2::get_error()
-        );
-
-        Ok(extensions)
+    fn cstr_to_ptr(arr: &[&CStr]) -> Vec<*const i8> {
+        return arr.iter().map(|&cstr| cstr.as_ptr()).collect();
     }
 }
 

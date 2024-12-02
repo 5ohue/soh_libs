@@ -34,7 +34,7 @@ pub mod debug;
 
 // Window system integration
 pub mod wsi;
-pub use wsi::*;
+pub use wsi::{Surface, Swapchain};
 
 // Allocated resources (buffers, images)
 pub mod res;

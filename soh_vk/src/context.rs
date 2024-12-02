@@ -1,6 +1,7 @@
 //-----------------------------------------------------------------------------
 use anyhow::Result;
 use soh_log::LogError;
+use winit::platform::{wayland::ActiveEventLoopExtWayland, x11::ActiveEventLoopExtX11};
 //-----------------------------------------------------------------------------
 
 pub struct ContextBootstrapInfo<'a> {
@@ -14,7 +15,8 @@ pub struct ContextBootstrapInfo<'a> {
     /*
      * Window
      */
-    pub window: &'a sdl2::video::Window,
+    pub event_loop: &'a winit::event_loop::ActiveEventLoop,
+    pub window: &'a winit::window::Window,
 
     /*
      * Frame info
@@ -134,6 +136,7 @@ impl VulkanContext {
 impl VulkanContext {
     pub fn bootstrap(bootstrap_info: ContextBootstrapInfo) -> Result<VulkanContext> {
         let num_of_frames = bootstrap_info.num_of_frames_in_flight as u32;
+        let win_size = bootstrap_info.window.inner_size();
 
         crate::debug::setup_messenger(bootstrap_info.debug_messenger_callback);
 
@@ -145,7 +148,7 @@ impl VulkanContext {
         let device = crate::Device::new(&instance, &surface)?;
 
         let swapchain =
-            crate::Swapchain::new(&device, &surface, bootstrap_info.window.drawable_size())?;
+            crate::Swapchain::new(&device, &surface, (win_size.width, win_size.height))?;
         let render_pass = crate::RenderPass::new_simple(&device, swapchain.image_format())?;
         let framebuffers =
             crate::Framebuffer::new_from_swapchain(&device, &swapchain, &render_pass)?;
@@ -340,6 +343,9 @@ impl VulkanContext {
     }
 
     fn create_instance(bootstrap_info: &ContextBootstrapInfo) -> Result<crate::InstanceRef> {
+        /*
+         * Helper functions
+         */
         fn make_vk_version(tuple_version: (u32, u32, u32)) -> u32 {
             return ash::vk::make_api_version(0, tuple_version.0, tuple_version.1, tuple_version.2);
         }
@@ -355,6 +361,9 @@ impl VulkanContext {
             return (major, minor, patch);
         }
 
+        /*
+         * Create info
+         */
         let default_version = ash::vk::make_api_version(0, 1, 0, 0);
         let app_version = make_vk_version(bootstrap_info.app_version);
         let engine_version = make_vk_version(get_this_crate_version());
@@ -370,9 +379,37 @@ impl VulkanContext {
             .engine_version(engine_version)
             .api_version(default_version);
 
-        let instance = crate::Instance::new(&app_info, bootstrap_info.window)?;
+        /*
+         * Deduce platform
+         */
+        let platform = Self::deduce_platform(bootstrap_info)?;
+
+        let instance = crate::Instance::new(&app_info, platform)?;
 
         return Ok(instance);
+    }
+
+    fn deduce_platform(bootstrap_info: &ContextBootstrapInfo) -> Result<crate::wsi::Platform> {
+        let _ = bootstrap_info;
+
+        #[cfg(target_os = "windows")]
+        {
+            return Ok(crate::wsi::Platform::Win32);
+        }
+
+        #[cfg(target_os = "linux")]
+        {
+            let event_loop = bootstrap_info.event_loop;
+
+            if event_loop.is_x11() {
+                return Ok(crate::wsi::Platform::X11);
+            }
+            if event_loop.is_wayland() {
+                return Ok(crate::wsi::Platform::Wayland);
+            }
+
+            anyhow::bail!("Weird platform on linux: neither X11 nor wayland");
+        }
     }
 }
 

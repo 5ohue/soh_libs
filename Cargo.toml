@@ -58,7 +58,7 @@ serde = { version = ">=1.0,<2.0", features = [ "derive" ] }
 num-traits = "<1.0"
 
 ash = "<1.0"
-sdl2 = "<1.0"
+winit = "0.30"
 ron = "<1.0"
 
 # Macro libs

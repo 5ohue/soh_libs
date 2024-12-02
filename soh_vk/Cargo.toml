@@ -9,7 +9,7 @@ soh_log = { workspace = true }
 soh_math = { workspace = true }
 anyhow = { workspace = true }
 ash = { workspace = true }
-sdl2 = { workspace = true }
+winit = { workspace = true }
 shaderc = { version = "<1.0", features = [ "build-from-source" ] }
 
 [lints]

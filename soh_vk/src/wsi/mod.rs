@@ -5,3 +5,15 @@ mod swapchain;
 pub use surface::*;
 pub use swapchain::*;
 //-----------------------------------------------------------------------------
+
+#[non_exhaustive]
+pub enum Platform {
+    // Windows
+    Win32,
+
+    // Linux
+    Wayland,
+    X11,
+}
+
+//-----------------------------------------------------------------------------
