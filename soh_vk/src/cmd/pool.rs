@@ -1,4 +1,4 @@
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use ash::vk;
 
 pub struct Pool {
@@ -69,7 +69,7 @@ impl Pool {
         let cmd_buffers = unsafe { self.device.allocate_command_buffers(&alloc_info)? };
 
         let Some(&cmd_buffer) = cmd_buffers.first() else {
-            return Err(anyhow!("No command buffers were allocated"));
+            anyhow::bail!("No command buffers were allocated");
         };
 
         return Ok(super::Buffer::from_handle(
@@ -94,7 +94,7 @@ impl Pool {
 
         anyhow::ensure!(
             cmd_buffers.len() == count as usize,
-            "Number of allocated buffers doesn't match the requested count!"
+            "Number of allocated buffers doesn't match the requested count"
         );
 
         let res = cmd_buffers

@@ -1,7 +1,6 @@
 //-----------------------------------------------------------------------------
 use anyhow::Result;
 use soh_log::LogError;
-use winit::platform::{wayland::ActiveEventLoopExtWayland, x11::ActiveEventLoopExtX11};
 //-----------------------------------------------------------------------------
 
 pub struct ContextBootstrapInfo<'a> {
@@ -224,22 +223,22 @@ impl VulkanContext {
 // Specific implementation
 impl VulkanContext {
     /// Returns true if swapchain should be recreated
-    pub fn on_frame<F>(&self, frame_idx: usize, user_draw_func: F) -> Result<bool>
+    pub fn on_frame<F>(&self, frame_num: usize, user_draw_func: F) -> Result<bool>
     where
         F: FnOnce(PerFrameData<'_>) -> Result<()>,
     {
         /*
          * Get current frame index
          */
-        let frame = frame_idx % self.num_of_frames_in_flight();
+        let frame_idx = frame_num % self.num_of_frames_in_flight();
 
         /*
          * Get object references
          */
-        let cmd_buffer = &self.cmd_buffers[frame];
-        let image_available_semaphore = &self.image_available_semaphores[frame];
-        let render_finished_semaphore = &self.render_finished_semaphores[frame];
-        let in_flight_fence = &self.in_flight_fences[frame];
+        let cmd_buffer = &self.cmd_buffers[frame_idx];
+        let image_available_semaphore = &self.image_available_semaphores[frame_idx];
+        let render_finished_semaphore = &self.render_finished_semaphores[frame_idx];
+        let in_flight_fence = &self.in_flight_fences[frame_idx];
 
         /*
          * Wait for the frame to finish rendering
@@ -279,7 +278,7 @@ impl VulkanContext {
          */
         let per_frame_data = PerFrameData {
             context: self,
-            frame_idx: frame,
+            frame_idx,
             image_idx,
 
             framebuffer: &self.framebuffers[image_idx],
@@ -399,6 +398,8 @@ impl VulkanContext {
 
         #[cfg(target_os = "linux")]
         {
+            use winit::platform::{wayland::ActiveEventLoopExtWayland, x11::ActiveEventLoopExtX11};
+
             let event_loop = bootstrap_info.event_loop;
 
             if event_loop.is_x11() {
@@ -407,9 +408,9 @@ impl VulkanContext {
             if event_loop.is_wayland() {
                 return Ok(crate::wsi::Platform::Wayland);
             }
-
-            anyhow::bail!("Weird platform on linux: neither X11 nor wayland");
         }
+
+        anyhow::bail!("Weird platform on linux: neither X11 nor wayland");
     }
 }
 

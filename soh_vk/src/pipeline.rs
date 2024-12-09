@@ -11,11 +11,19 @@ pub struct Pipeline {
     pipeline_layout: vk::PipelineLayout,
 }
 
+// Getters
+impl Pipeline {
+    pub fn layout(&self) -> vk::PipelineLayout {
+        return self.pipeline_layout;
+    }
+}
+
 // Constructor, destructor
 impl Pipeline {
     pub fn new(
         device: &crate::DeviceRef,
         render_pass: &crate::RenderPass,
+        descriptor_set_layouts: &[&crate::descriptor::SetLayout],
         vertex_descriptions: &[crate::vertex::VertexDescription],
         vertex_shader: &crate::Shader,
         fragment_shader: &crate::Shader,
@@ -69,7 +77,7 @@ impl Pipeline {
             .rasterizer_discard_enable(false) // Do not disable output to frame buffer
             .polygon_mode(vk::PolygonMode::FILL)
             .line_width(1.0)
-            .cull_mode(vk::CullModeFlags::BACK) // Backface culling
+            .cull_mode(vk::CullModeFlags::FRONT) // Backface culling
             .front_face(vk::FrontFace::CLOCKWISE)
             .depth_bias_enable(false);
 
@@ -112,7 +120,11 @@ impl Pipeline {
         /*
          * Pipeline layout
          */
-        let pipeline_layout_create_info = vk::PipelineLayoutCreateInfo::default();
+        let descriptor_set_layouts = crate::get_handles_vec(descriptor_set_layouts);
+
+        let pipeline_layout_create_info =
+            vk::PipelineLayoutCreateInfo::default().set_layouts(&descriptor_set_layouts);
+
         let pipeline_layout =
             unsafe { device.create_pipeline_layout(&pipeline_layout_create_info, None)? };
 

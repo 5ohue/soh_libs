@@ -125,6 +125,25 @@ impl Buffer {
         }
     }
 
+    pub fn bind_descriptor_sets(
+        &self,
+        pipeline: &crate::Pipeline,
+        descriptor_sets: &[&crate::descriptor::Set],
+    ) {
+        let descriptor_sets = crate::get_handles_vec(descriptor_sets);
+
+        unsafe {
+            self.device.cmd_bind_descriptor_sets(
+                **self,
+                vk::PipelineBindPoint::GRAPHICS,
+                pipeline.layout(),
+                0,
+                &descriptor_sets,
+                &[],
+            );
+        }
+    }
+
     pub fn draw(
         &self,
         vertex_count: u32,

@@ -106,33 +106,14 @@ impl Buffer {
         /*
          * Create and allocate buffer
          */
-        let buffer = Self::new(
+        let mut buffer = Self::new(
             device,
             buffer_size,
             usage,
             crate::MemoryPropertyFlags::HOST_VISIBLE | crate::MemoryPropertyFlags::HOST_COHERENT,
         )?;
 
-        /*
-         * Map the memory
-         */
-        let data_ptr = unsafe {
-            device.map_memory(buffer.memory, 0, buffer_size, vk::MemoryMapFlags::empty())?
-        };
-
-        /*
-         * Write the data to the mapped memory
-         */
-        unsafe {
-            std::ptr::copy_nonoverlapping(data.as_ptr().cast(), data_ptr, buffer_size as usize);
-        }
-
-        /*
-         * Unmap
-         */
-        unsafe {
-            device.unmap_memory(buffer.memory);
-        }
+        Self::write_mapped(&mut buffer, data)?;
 
         return Ok(buffer);
     }
@@ -178,6 +159,75 @@ impl Buffer {
         unsafe {
             self.device.free_memory(self.memory, None);
             self.device.destroy_buffer(self.buffer, None);
+        }
+    }
+}
+
+// Specific implementation
+impl Buffer {
+    /// Map the buffer and write data to it
+    pub fn write_mapped<T>(&mut self, data: &[T]) -> Result<()>
+    where
+        T: Copy,
+    {
+        let buffer_size = size_of_val(data) as u64;
+
+        anyhow::ensure!(
+            self.size >= buffer_size,
+            "Buffer memory is smaller than the data that is being written to it"
+        );
+
+        anyhow::ensure!(
+            self.properties.contains(
+                vk::MemoryPropertyFlags::HOST_VISIBLE | vk::MemoryPropertyFlags::HOST_COHERENT
+            ),
+            "Buffer cannot be mapped to write memory"
+        );
+
+        /*
+         * Map the memory
+         */
+        let data_ptr = self.map()?;
+
+        /*
+         * Write the data to the mapped memory
+         */
+        unsafe {
+            Self::write_memory(data_ptr, data);
+        }
+
+        /*
+         * Unmap
+         */
+        self.unmap();
+
+        return Ok(());
+    }
+
+    pub fn map(&mut self) -> Result<*mut std::ffi::c_void> {
+        return Ok(unsafe {
+            self.device
+                .map_memory(self.memory, 0, self.size, vk::MemoryMapFlags::empty())?
+        });
+    }
+
+    /// # Safety
+    ///
+    /// `data_ptr` must come from `[Self::map]` function
+    /// buffer memory must be still mapped
+    /// `data` must be smaller or equal in size to the size of `data_ptr`
+    pub unsafe fn write_memory<T>(data_ptr: *mut std::ffi::c_void, data: &[T])
+    where
+        T: Copy,
+    {
+        unsafe {
+            std::ptr::copy_nonoverlapping(data.as_ptr().cast(), data_ptr, size_of_val(data));
+        }
+    }
+
+    pub fn unmap(&mut self) {
+        unsafe {
+            self.device.unmap_memory(self.memory);
         }
     }
 }

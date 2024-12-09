@@ -53,6 +53,11 @@ pub use vertex::Vertex;
 
 // Index buffer
 pub mod index;
+
+// Descripor stuff
+pub mod descriptor;
+pub use descriptor::uniform;
+
 //-----------------------------------------------------------------------------
 
 pub enum QueueType {
@@ -72,6 +77,14 @@ where
         Some(obj) => **obj,
         None => H::from_raw(0),
     };
+}
+
+fn get_handles_vec<T, H>(wrappers: &[&T]) -> Vec<H>
+where
+    T: std::ops::Deref<Target = H>,
+    H: ash::vk::Handle + Copy,
+{
+    return wrappers.iter().map(|w| ***w).collect();
 }
 
 //-----------------------------------------------------------------------------

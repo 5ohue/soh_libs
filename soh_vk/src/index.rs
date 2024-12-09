@@ -23,7 +23,7 @@ impl Buffer {
 
 // Constructor, destructor
 impl Buffer {
-    pub fn new_u16(context: &crate::VulkanContext, indexes: &[u16]) -> Result<Buffer> {
+    pub fn new_u16(context: &crate::VulkanContext, indexes: &[u16]) -> Result<Self> {
         let buffer = crate::Buffer::new_staged(
             context.device(),
             unsafe { context.cmd_pool_transfer() },
@@ -38,7 +38,7 @@ impl Buffer {
         });
     }
 
-    pub fn new_u32(context: &crate::VulkanContext, indexes: &[u32]) -> Result<Buffer> {
+    pub fn new_u32(context: &crate::VulkanContext, indexes: &[u32]) -> Result<Self> {
         let buffer = crate::Buffer::new_staged(
             context.device(),
             unsafe { context.cmd_pool_transfer() },
