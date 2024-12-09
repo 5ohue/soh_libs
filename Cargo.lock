@@ -1179,9 +1179,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "soh_game"
+version = "0.1.0"
+dependencies = [
+ "soh_math",
+ "winit",
+]
+
+[[package]]
 name = "soh_libs"
 version = "0.1.0"
 dependencies = [
+ "soh_game",
  "soh_log",
  "soh_math",
  "soh_rng",

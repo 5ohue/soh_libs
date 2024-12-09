@@ -20,4 +20,7 @@ pub use soh_ui as ui;
 #[cfg(feature = "thread")]
 pub use soh_thread as thread;
 
+#[cfg(feature = "game")]
+pub use soh_game as game;
+
 //-----------------------------------------------------------------------------

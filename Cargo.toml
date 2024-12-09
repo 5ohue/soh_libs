@@ -12,10 +12,11 @@ soh_log = { workspace = true, optional = true }
 soh_vk = { workspace = true, optional = true }
 soh_ui = { workspace = true, optional = true }
 soh_thread = { workspace = true, optional = true }
+soh_game = { workspace = true, optional = true }
 
 [features]
 default = [ ]
-all = [ "math", "rng", "log", "vk", "ui", "thread" ]
+all = [ "math", "rng", "log", "vk", "ui", "thread", "game" ]
 
 math = [ "dep:soh_math" ]
 rng = [ "dep:soh_rng" ]
@@ -23,6 +24,7 @@ log = [ "dep:soh_log", "soh_thread?/log" ]
 vk = [ "dep:soh_vk", "math" ]
 ui = [ "dep:soh_ui", "vk" ]
 thread = [ "dep:soh_thread" ]
+game = [ "dep:soh_game" ]
 
 serde = [ "soh_math?/serde" ]
 f128 = [ "soh_math?/f128" ]
@@ -36,7 +38,8 @@ members = [
     "soh_log",
     "soh_vk",
     "soh_ui",
-    "soh_thread"
+    "soh_thread",
+    "soh_game"
 ]
 
 [workspace.package]
@@ -51,6 +54,7 @@ soh_log = { path = "./soh_log" }
 soh_vk = { path = "./soh_vk" }
 soh_ui = { path = "./soh_ui" }
 soh_thread = { path = "./soh_thread" }
+soh_game = { path = "./soh_game" }
 
 # Other libs
 anyhow = ">=1.0,<2.0"

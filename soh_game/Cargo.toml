@@ -1,0 +1,11 @@
+[package]
+name = "soh_game"
+version.workspace = true
+edition.workspace = true
+
+[dependencies]
+soh_math = { workspace = true }
+winit = { workspace = true }
+
+[lints]
+workspace = true
