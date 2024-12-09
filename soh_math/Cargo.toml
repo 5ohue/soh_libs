@@ -7,12 +7,15 @@ edition.workspace = true
 macro_impl_vec = { path = "./macro_impl_vec" }
 serde = { workspace = true, optional = true }
 num-traits = { workspace = true }
+f128_num = { workspace = true, optional = true }
 
 [dev-dependencies]
 soh_rng = { workspace = true }
+f128_num = { workspace = true }
 
 [features]
 serde = [ "dep:serde" ]
+f128 = [ "dep:f128_num" ]
 
 [lints]
 workspace = true

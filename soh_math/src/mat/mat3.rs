@@ -1,6 +1,5 @@
 //-----------------------------------------------------------------------------
 use crate::Vec3;
-use num_traits::Float;
 //-----------------------------------------------------------------------------
 /// 3x3 matrix ( column major )
 #[repr(transparent)]
@@ -20,19 +19,39 @@ where
     }
 
     /// Construct a matrix from rows
-    pub const fn from_rows(rows: [[T; 3]; 3]) -> Self {
+    pub const fn from_rows(rows: [Vec3<T>; 3]) -> Self {
         return Mat3([
-            rows[0][0], rows[1][0], rows[2][0], rows[0][1], rows[1][1], rows[2][1], rows[0][2],
-            rows[1][2], rows[2][2],
+            rows[0].x, rows[1].x, rows[2].x,
+            rows[0].y, rows[1].y, rows[2].y,
+            rows[0].z, rows[1].z, rows[2].z,
         ]);
     }
 
     /// Construct a matrix from columns
-    pub const fn from_cols(cols: [[T; 3]; 3]) -> Self {
+    pub const fn from_cols(cols: [Vec3<T>; 3]) -> Self {
         return Mat3([
-            cols[0][0], cols[0][1], cols[0][2], cols[1][0], cols[1][1], cols[1][2], cols[2][0],
-            cols[2][1], cols[2][2],
+            cols[0].x, cols[0].y, cols[0].z,
+            cols[1].x, cols[1].y, cols[1].z,
+            cols[2].x, cols[2].y, cols[2].z,
         ]);
+    }
+
+    /// Get the row
+    pub const fn row(&self, row: usize) -> Vec3<T> {
+        return Vec3::new(
+            self.at(row, 0),
+            self.at(row, 1),
+            self.at(row, 2),
+        );
+    }
+
+    /// Get the column
+    pub const fn col(&self, col: usize) -> Vec3<T> {
+        return Vec3::new(
+            self.at(0, col),
+            self.at(1, col),
+            self.at(2, col),
+        );
     }
 
     /// Get the element at row `row` and column `col`
@@ -40,80 +59,85 @@ where
     pub const fn at(&self, row: usize, col: usize) -> T {
         return self.0[col * 3 + row];
     }
+
+    /// Get mut reference to element at row `row` and column `col`
+    /// (zero indexed)
+    pub const fn at_mut(&mut self, row: usize, col: usize) -> &mut T {
+        return &mut self.0[col * 3 + row]
+    }
 }
 
 impl<T> Mat3<T>
 where
-    T: num_traits::Num + std::ops::Neg<Output = T> + Copy,
+    T: num_traits::Num + crate::traits::WholeConsts + std::ops::Neg<Output = T> + Copy,
 {
     /// Get the identity matrix
-    pub fn identity() -> Self {
+    pub const fn identity() -> Self {
         return Mat3([
-            T::one(),
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            T::one(),
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            T::one(),
+            T::ONE,  T::ZERO, T::ZERO,
+            T::ZERO, T::ONE,  T::ZERO,
+            T::ZERO, T::ZERO, T::ONE,
         ]);
     }
 
     /// Construct a scaling matrix
-    pub fn scale(factor: T) -> Self {
+    pub const fn scale(factor: T) -> Self {
         return Mat3([
-            factor,
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            factor,
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            factor,
+            factor,  T::ZERO, T::ZERO,
+            T::ZERO, factor,  T::ZERO,
+            T::ZERO, T::ZERO, factor,
         ]);
     }
 
     /// Get matrix determinant
     pub fn det(&self) -> T {
-        return self.0[0] * (self.0[4] * self.0[8] - self.0[5] * self.0[7])
-            - self.0[1] * (self.0[3] * self.0[8] - self.0[5] * self.0[6])
-            + self.0[2] * (self.0[3] * self.0[7] - self.0[4] * self.0[6]);
+        return self.0[0] * (self.0[4] * self.0[8] - self.0[7] * self.0[5])
+             + self.0[3] * (self.0[7] * self.0[2] - self.0[1] * self.0[8])
+             + self.0[6] * (self.0[1] * self.0[5] - self.0[4] * self.0[2]);
     }
 
     /// Get the transposed matrix
     pub const fn t(&self) -> Self {
-        // rustfmt is crazy
         return Mat3([
-            self.0[0], self.0[3], self.0[6], self.0[1], self.0[4], self.0[7], self.0[2], self.0[5],
-            self.0[8],
+            self.0[0], self.0[3], self.0[6],
+            self.0[1], self.0[4], self.0[7],
+            self.0[2], self.0[5], self.0[8],
         ]);
     }
 
     /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
+        let inv = self.invert_no_det();
+
+        let det = self.0[0] * inv.0[0]
+                + self.0[3] * inv.0[1]
+                + self.0[6] * inv.0[2];
+
+        return inv / det;
+    }
+
+    /// Get an inverse of `self` (but no devision by determinant)
+    pub fn invert_no_det(&self) -> Self {
         return Mat3([
             // First column
-            (self.0[4] * self.0[8] - self.0[5] * self.0[7]),
-            (self.0[2] * self.0[7] - self.0[1] * self.0[8]),
-            (self.0[1] * self.0[5] - self.0[2] * self.0[4]),
+            (self.0[4] * self.0[8] - self.0[7] * self.0[5]),
+            (self.0[7] * self.0[2] - self.0[1] * self.0[8]),
+            (self.0[1] * self.0[5] - self.0[4] * self.0[2]),
             // Second column
-            (self.0[5] * self.0[6] - self.0[3] * self.0[8]),
-            (self.0[0] * self.0[8] - self.0[2] * self.0[6]),
-            (self.0[2] * self.0[3] - self.0[0] * self.0[5]),
+            (self.0[6] * self.0[5] - self.0[3] * self.0[8]),
+            (self.0[0] * self.0[8] - self.0[6] * self.0[2]),
+            (self.0[3] * self.0[2] - self.0[0] * self.0[5]),
             // Third column
-            (self.0[3] * self.0[7] - self.0[4] * self.0[6]),
-            (self.0[1] * self.0[6] - self.0[0] * self.0[7]),
-            (self.0[0] * self.0[4] - self.0[1] * self.0[3]),
-        ]) / self.det();
+            (self.0[3] * self.0[7] - self.0[6] * self.0[4]),
+            (self.0[6] * self.0[1] - self.0[0] * self.0[7]),
+            (self.0[0] * self.0[4] - self.0[3] * self.0[1]),
+        ]);
     }
 }
 
 impl<T> Mat3<T>
 where
-    T: Float + std::iter::Sum + From<f32>,
+    T: num_traits::Float + std::iter::Sum + From<f32>,
 {
     /// Get a rotation matrix for yaw `phi`
     /// ( Rotation around the z-axis )
@@ -122,15 +146,9 @@ where
         let phi_sin = phi.sin();
 
         return Mat3([
-            phi_cos,
-            phi_sin,
-            T::zero(),
-            -phi_sin,
-            phi_cos,
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            T::one(),
+             phi_cos,   phi_sin,   T::zero(),
+            -phi_sin,   phi_cos,   T::zero(),
+             T::zero(), T::zero(), T::one(),
         ]);
     }
 
@@ -141,15 +159,9 @@ where
         let theta_sin = theta.sin();
 
         return Mat3([
-            theta_cos,
-            T::zero(),
-            -theta_sin,
-            T::zero(),
-            T::one(),
-            T::zero(),
-            theta_sin,
-            T::zero(),
-            theta_cos,
+            theta_cos, T::zero(), -theta_sin,
+            T::zero(), T::one(),   T::zero(),
+            theta_sin, T::zero(),  theta_cos,
         ]);
     }
 
@@ -160,15 +172,9 @@ where
         let psi_sin = psi.sin();
 
         return Mat3([
-            T::one(),
-            T::zero(),
-            T::zero(),
-            T::zero(),
-            psi_cos,
-            psi_sin,
-            T::zero(),
-            -psi_sin,
-            psi_cos,
+            T::one(),   T::zero(), T::zero(),
+            T::zero(),  psi_cos,   psi_sin,
+            T::zero(), -psi_sin,   psi_cos,
         ]);
     }
 
@@ -202,7 +208,7 @@ where
     /// Get euler angles ( yaw, pitch, roll )
     ///
     /// source:
-    /// [<https://learnopencv.com/rotation-matrix-to-euler-angles/>]
+    /// <https://learnopencv.com/rotation-matrix-to-euler-angles/>
     pub fn get_euler_angles(&self) -> (T, T, T) {
         let sy = T::hypot(self.at(0, 0), self.at(1, 0));
 
@@ -221,6 +227,101 @@ where
                 T::atan2(-self.at(1, 2), self.at(1, 1)),
             );
         }
+    }
+
+    /// Create a rotation matrix from rotation axis and angle
+    ///
+    /// source:
+    /// <https://songho.ca/opengl/gl_rotate.html>
+    pub fn from_axis_angle(axis: Vec3<T>, angle: T) -> Self {
+        // Angle related values
+        let cos = angle.cos();
+        let sin = angle.sin();
+
+        let one_minus_cos = T::one() - cos;
+
+        // Unpack axis
+        let Vec3 { x, y, z } = axis.normalized();
+
+        let xx = x * x;
+        let xy = x * y;
+        let xz = x * z;
+
+        let yy = y * y;
+        let yz = y * z;
+
+        let zz = z * z;
+
+        return Mat3([
+            // First column
+            one_minus_cos * xx + cos,
+            one_minus_cos * xy + sin * z,
+            one_minus_cos * xz - sin * y,
+            // Second column
+            one_minus_cos * xy - sin * z,
+            one_minus_cos * yy + cos,
+            one_minus_cos * yz + sin * x,
+            // Third column
+            one_minus_cos * xz + sin * y,
+            one_minus_cos * yz - sin * x,
+            one_minus_cos * zz + cos,
+        ]);
+    }
+
+    /// Create a rotation matrix from a unit quaternion
+    ///
+    /// source:
+    /// <https://songho.ca/opengl/gl_quaternion.html>
+    pub fn from_quat(quat: crate::Quaternion<T>) -> Self {
+        // Unpack quaternion
+        let crate::Quaternion {
+            scalar: s,
+            vector: Vec3 { x, y, z },
+        } = quat;
+
+        let sx = s * x;
+        let sy = s * y;
+        let sz = s * z;
+
+        let xx = x * x;
+        let xy = x * y;
+        let xz = x * z;
+
+        let yy = y * y;
+        let yz = y * z;
+
+        let zz = z * z;
+
+        let one = T::one();
+        let two = one + one;
+
+        return Mat3([
+            // First column
+            one - two*yy - two*zz,
+            two*xy + two*sz,
+            two*xz - two*sy,
+            // Second column
+            two*xy - two*sz,
+            one - two*xx - two*zz,
+            two*yz + two*sx,
+            // Third column
+            two*xz + two*sy,
+            two*yz - two*sx,
+            one - two*xx - two*yy,
+        ]);
+    }
+
+    /// LookAt matrix:
+    ///
+    /// The direction from `pos` to `target` becomes the Z direction
+    /// Orthogonalized `up` becomes Y direction
+    /// (Y x Z) becomes X direction
+    pub fn look_at(pos: Vec3<T>, target: Vec3<T>, up: Vec3<T>) -> Self {
+        let z = (target - pos).normalized();
+        let x = Vec3::cross(&up, &z).normalized();
+        let y = Vec3::cross(&z, &x);
+
+        return Self::from_cols([x, y, z]);
     }
 
     /// Get the norm
@@ -350,6 +451,27 @@ where
             self.0[6] / rhs,
             self.0[7] / rhs,
             self.0[8] / rhs,
+        ]);
+    }
+}
+
+impl<T> std::ops::Neg for Mat3<T>
+where
+    T: std::ops::Neg<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        return Mat3([
+            -self.0[0],
+            -self.0[1],
+            -self.0[2],
+            -self.0[3],
+            -self.0[4],
+            -self.0[5],
+            -self.0[6],
+            -self.0[7],
+            -self.0[8],
         ]);
     }
 }

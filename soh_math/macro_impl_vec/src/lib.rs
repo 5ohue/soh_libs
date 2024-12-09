@@ -85,26 +85,44 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             }
         }
 
+        //----------------------------------------------------------------------
         // One, Zero
+        impl<#ttype> crate::traits::WholeConsts for #struct_name<#ttype>
+        where
+            #ttype: crate::traits::WholeConsts,
+        {
+            const ZERO: Self = #struct_name {
+                #(#field: #ttype::ZERO),*
+            };
+            const ONE: Self = #struct_name {
+                #(#field: #ttype::ONE),*
+            };
+            const TWO: Self = #struct_name {
+                #(#field: #ttype::TWO),*
+            };
+        }
+
         impl<#ttype> #struct_name<#ttype>
         where
-            #ttype: num_traits::Num + Copy,
+            #ttype: crate::traits::WholeConsts,
         {
             /// Vector with all components equal zero
-            pub fn zero() -> Self {
-                return #struct_name {
-                    #(#field: #ttype::zero()),*
-                }
+            pub const fn zero() -> Self {
+                return <Self as crate::traits::WholeConsts>::ZERO;
             }
 
             /// Vector with all components equal one
-            pub fn one() -> Self {
-                return #struct_name {
-                    #(#field: #ttype::one()),*
-                }
+            pub const fn one() -> Self {
+                return <Self as crate::traits::WholeConsts>::ONE;
+            }
+
+            /// Vector with all components equal two
+            pub const fn two() -> Self {
+                return <Self as crate::traits::WholeConsts>::TWO;
             }
         }
 
+        //---------------------------------------------------------------------
         // Float, Int impl
         impl<#ttype> #struct_name<#ttype>
         where
@@ -138,10 +156,8 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         // Float impl
         impl<#ttype> #struct_name<#ttype>
         where
-            #ttype: num_traits::Float + std::ops::DivAssign,
+            #ttype: num_traits::Float,
         {
-            // Math functions
-
             /// Calculate the len of the vector ( for comparisons prefer using [Self::len2] )
             #len_impl
 
@@ -149,7 +165,12 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             pub fn normalized(&self) -> Self {
                 return *self / self.len();
             }
+        }
 
+        impl<#ttype> #struct_name<#ttype>
+        where
+            #ttype: num_traits::Float + std::ops::DivAssign,
+        {
             /// Make the len of vector 1.0
             pub fn normalize(&mut self) {
                 *self /= self.len();
@@ -280,6 +301,20 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 return #struct_name { #(#field, )* };
             }
         }
+
+        // Cannot have that! Conflicting impl for when `S` and `D` are the same
+        //
+        // impl<S, D> From<#struct_name<S>> for #struct_name<D>
+        // where
+        //     S: Copy,
+        //     D: Copy + From<S>,
+        // {
+        //     fn from(value: #struct_name<S>) -> #struct_name<D> {
+        //         return #struct_name {
+        //             #(#field: self.#field.into(), )*
+        //         };
+        //     }
+        // }
 
         impl<#ttype> From<[#ttype; #num_of_fields]> for #struct_name<#ttype>
         where

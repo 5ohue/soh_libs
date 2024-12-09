@@ -1,6 +1,5 @@
 //-----------------------------------------------------------------------------
 use crate::Vec2;
-use num_traits::Float;
 //-----------------------------------------------------------------------------
 /// 2x2 matrix ( column major )
 #[repr(transparent)]
@@ -20,34 +19,69 @@ where
     }
 
     /// Construct a matrix from rows
-    pub const fn from_rows(rows: [[T; 2]; 2]) -> Self {
-        return Mat2([rows[0][0], rows[1][0], rows[0][1], rows[1][1]]);
+    pub const fn from_rows(rows: [Vec2<T>; 2]) -> Self {
+        return Mat2([
+            rows[0].x, rows[1].x,
+            rows[0].y, rows[1].y
+        ]);
     }
 
     /// Construct a matrix from columns
-    pub const fn from_cols(cols: [[T; 2]; 2]) -> Self {
-        return Mat2([cols[0][0], cols[0][1], cols[1][0], cols[1][1]]);
+    pub const fn from_cols(cols: [Vec2<T>; 2]) -> Self {
+        return Mat2([
+            cols[0].x, cols[0].y,
+            cols[1].x, cols[1].y
+        ]);
+    }
+
+    /// Get the row
+    pub const fn row(&self, row: usize) -> Vec2<T> {
+        return Vec2::new(
+            self.at(row, 0),
+            self.at(row, 1),
+        );
+    }
+
+    /// Get the column
+    pub const fn col(&self, col: usize) -> Vec2<T> {
+        return Vec2::new(
+            self.at(0, col),
+            self.at(1, col),
+        );
     }
 
     /// Get the element at row `row` and column `col`
+    /// (zero indexed)
     #[inline(always)]
     pub const fn at(&self, row: usize, col: usize) -> T {
         return self.0[col * 2 + row];
+    }
+
+    /// Get mut reference to element at row `row` and column `col`
+    /// (zero indexed)
+    pub const fn at_mut(&mut self, row: usize, col: usize) -> &mut T {
+        return &mut self.0[col * 2 + row]
     }
 }
 
 impl<T> Mat2<T>
 where
-    T: num_traits::Num + std::ops::Neg<Output = T> + Copy,
+    T: num_traits::Num + crate::traits::WholeConsts + std::ops::Neg<Output = T> + Copy,
 {
     /// Get the identity matrix
-    pub fn identity() -> Self {
-        return Mat2([T::one(), T::zero(), T::zero(), T::one()]);
+    pub const fn identity() -> Self {
+        return Mat2([
+            T::ONE,  T::ZERO,
+            T::ZERO, T::ONE
+        ]);
     }
 
     /// Construct a scaling matrix
-    pub fn scale(factor: T) -> Self {
-        return Mat2([factor, T::zero(), T::zero(), factor]);
+    pub const fn scale(factor: T) -> Self {
+        return Mat2([
+            factor,  T::ZERO,
+            T::ZERO, factor
+        ]);
     }
 
     /// Get matrix determinant
@@ -57,25 +91,39 @@ where
 
     /// Get the transposed matrix
     pub const fn t(&self) -> Self {
-        return Mat2([self.0[0], self.0[2], self.0[1], self.0[3]]);
+        return Mat2([
+            self.0[0], self.0[2],
+            self.0[1], self.0[3]
+        ]);
     }
 
     /// Get an inverse of the `self`
     pub fn invert(&self) -> Self {
-        return Mat2([self.0[3], -self.0[1], -self.0[2], self.0[0]]) / self.det();
+        return self.invert_no_det() / self.det();
+    }
+
+    /// Get an inverse of `self` (but no devision by determinant)
+    pub fn invert_no_det(&self) -> Self {
+        return Mat2([
+            self.0[3], -self.0[1],
+            -self.0[2], self.0[0]
+        ]);
     }
 }
 
 impl<T> Mat2<T>
 where
-    T: Float + std::iter::Sum,
+    T: num_traits::Float + std::iter::Sum,
 {
     /// Construct a rotation matrix for angle `phi`
     pub fn rot(phi: T) -> Self {
         let cos_phi = phi.cos();
         let sin_phi = phi.sin();
 
-        return Mat2([cos_phi, sin_phi, -sin_phi, cos_phi]);
+        return Mat2([
+             cos_phi, sin_phi,
+            -sin_phi, cos_phi
+        ]);
     }
 
     /// Get the norm
@@ -176,6 +224,22 @@ where
             self.0[1] / rhs,
             self.0[2] / rhs,
             self.0[3] / rhs,
+        ]);
+    }
+}
+
+impl<T> std::ops::Neg for Mat2<T>
+where
+    T: std::ops::Neg<Output = T> + Copy,
+{
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        return Mat2([
+            -self.0[0],
+            -self.0[1],
+            -self.0[2],
+            -self.0[3],
         ]);
     }
 }

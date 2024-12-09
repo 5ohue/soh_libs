@@ -1,11 +1,14 @@
 //-----------------------------------------------------------------------------
-pub mod imaginary;
+// Formatting makes matrix code disgusting
+#[rustfmt::skip]
 pub mod mat;
-pub mod traits;
+pub mod imaginary;
 pub mod vec;
 //-----------------------------------------------------------------------------
 pub use imaginary::*;
 pub use mat::*;
-pub use traits::*;
 pub use vec::*;
+//-----------------------------------------------------------------------------
+pub mod traits;
+pub use traits::Convert;
 //-----------------------------------------------------------------------------
