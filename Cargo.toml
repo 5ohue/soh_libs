@@ -13,12 +13,14 @@ soh_vk = { workspace = true, optional = true }
 soh_ui = { workspace = true, optional = true }
 soh_thread = { workspace = true, optional = true }
 soh_game = { workspace = true, optional = true }
+soh_utl = { workspace = true, optional = true }
 
 [features]
 default = [ ]
 all = [ "math", "rng", "log", "vk", "ui", "thread", "game" ]
 
 math = [ "dep:soh_math" ]
+utl = [ "dep:soh_utl" ]
 rng = [ "dep:soh_rng" ]
 log = [ "dep:soh_log", "soh_thread?/log" ]
 vk = [ "dep:soh_vk", "math" ]
@@ -39,7 +41,8 @@ members = [
     "soh_vk",
     "soh_ui",
     "soh_thread",
-    "soh_game"
+    "soh_game",
+    "soh_utl"
 ]
 
 [workspace.package]
@@ -55,11 +58,13 @@ soh_vk = { path = "./soh_vk" }
 soh_ui = { path = "./soh_ui" }
 soh_thread = { path = "./soh_thread" }
 soh_game = { path = "./soh_game" }
+soh_utl = { path = "./soh_utl" }
 
 # Other libs
 anyhow = "1.0"
 clap = { version = "4.0", features = [ "derive" ] }
 serde = { version = "1.0", features = [ "derive" ] }
+smallvec = "1.14.0"
 num-traits = "0.2"
 f128_num = { package = "f128", version = "0.2" }
 

@@ -23,4 +23,7 @@ pub use soh_thread as thread;
 #[cfg(feature = "game")]
 pub use soh_game as game;
 
+#[cfg(feature = "utl")]
+pub use soh_utl as utl;
+
 //-----------------------------------------------------------------------------
