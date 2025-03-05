@@ -18,8 +18,8 @@ pub use render_pass::*;
 
 //-----------------------------------------------------------------------------
 // Typedefs
-pub mod typedefs;
-pub use typedefs::*;
+pub mod types;
+pub use types::*;
 
 // Context (reduce boilerplate)
 pub mod context;
@@ -57,14 +57,6 @@ pub mod index;
 // Descripor stuff
 pub mod descriptor;
 pub use descriptor::uniform;
-
-//-----------------------------------------------------------------------------
-
-pub enum QueueType {
-    Graphics,
-    Present,
-    Transfer,
-}
 
 //-----------------------------------------------------------------------------
 // Helps to easily get a handle from a Option<&WrapperType>

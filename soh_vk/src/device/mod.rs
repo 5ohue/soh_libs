@@ -5,6 +5,8 @@ pub mod physical;
 use anyhow::Result;
 use ash::vk::{self, Handle};
 
+//-----------------------------------------------------------------------------
+
 pub struct Device {
     // Keep instance from being destoyed
     instance: crate::InstanceRef,
@@ -21,15 +23,16 @@ pub struct Device {
     transfer_queue: vk::Queue,
 }
 
+//-----------------------------------------------------------------------------
 /// Device reference stored inside other vulkan types
 ///
 /// (This is needed because the vulkan handles are implicitly bound to a specific device. Therefore
 /// it's redundant to have to provide devices everywhere)
 pub type DeviceRef = std::rc::Rc<Device>;
-
+//-----------------------------------------------------------------------------
 // According to the vulkan documentation this should be OK
 unsafe impl Sync for Device {}
-
+//-----------------------------------------------------------------------------
 // Getters
 impl Device {
     pub fn instance(&self) -> &crate::Instance {
@@ -53,6 +56,7 @@ impl Device {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Device {
     pub fn new(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<DeviceRef> {
@@ -123,6 +127,7 @@ impl Device {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Drop
 impl Drop for Device {
     fn drop(&mut self) {
@@ -135,6 +140,7 @@ impl Drop for Device {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Device {
     pub fn wait_idle(&self) {
@@ -153,6 +159,7 @@ impl Device {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Device {
     type Target = ash::Device;

@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Swapchain {
     device: crate::DeviceRef,
@@ -11,6 +13,7 @@ pub struct Swapchain {
     num_of_images: usize,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Swapchain {
     pub fn image_format(&self) -> crate::Format {
@@ -24,6 +27,7 @@ impl Swapchain {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Swapchain {
     pub fn new(
@@ -125,6 +129,7 @@ impl Swapchain {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Swapchain {
     /// On success, returns the next image's index and whether the swapchain is suboptimal for the surface.
@@ -233,6 +238,7 @@ impl Swapchain {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Swapchain {
     type Target = vk::SwapchainKHR;
@@ -241,3 +247,5 @@ impl std::ops::Deref for Swapchain {
         return &self.swapchain;
     }
 }
+
+//-----------------------------------------------------------------------------

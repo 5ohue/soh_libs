@@ -30,6 +30,7 @@ pub struct ContextBootstrapInfo<'a> {
     pub shader_directory: &'a str,
 }
 
+//-----------------------------------------------------------------------------
 /// Struct which contains the vulkan context information
 ///
 /// This includes
@@ -86,7 +87,6 @@ pub struct PerFrameData<'a> {
 }
 
 //-----------------------------------------------------------------------------
-
 // Getters
 impl VulkanContext {
     pub fn instance(&self) -> &crate::InstanceRef {
@@ -131,6 +131,7 @@ impl VulkanContext {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl VulkanContext {
     pub fn bootstrap(bootstrap_info: ContextBootstrapInfo) -> Result<VulkanContext> {
@@ -220,6 +221,7 @@ impl VulkanContext {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl VulkanContext {
     /// Returns true if swapchain should be recreated
@@ -391,13 +393,11 @@ impl VulkanContext {
     fn deduce_platform(bootstrap_info: &ContextBootstrapInfo) -> Result<crate::wsi::Platform> {
         let _ = bootstrap_info;
 
-        #[cfg(target_os = "windows")]
-        {
+        if cfg!(target_os = "windows") {
             return Ok(crate::wsi::Platform::Win32);
         }
 
-        #[cfg(target_os = "linux")]
-        {
+        if cfg!(target_os = "linux") {
             use winit::platform::{wayland::ActiveEventLoopExtWayland, x11::ActiveEventLoopExtX11};
 
             let event_loop = bootstrap_info.event_loop;

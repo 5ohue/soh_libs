@@ -40,7 +40,6 @@ pub struct SwapchainSupportInfo {
 }
 
 //-----------------------------------------------------------------------------
-
 // Getters
 impl Device {
     pub fn info(&self) -> &PhysicalDeviceInfo {
@@ -394,7 +393,6 @@ impl QueueFamilyIndices {
 }
 
 //-----------------------------------------------------------------------------
-
 // Deref
 impl std::ops::Deref for Device {
     type Target = vk::PhysicalDevice;

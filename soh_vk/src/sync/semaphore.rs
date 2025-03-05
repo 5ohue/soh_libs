@@ -1,11 +1,14 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Semaphore {
     device: crate::DeviceRef,
     semaphore: vk::Semaphore,
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Semaphore {
     pub fn new(device: &crate::DeviceRef) -> Result<Self> {
@@ -25,6 +28,7 @@ impl Semaphore {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Semaphore {
     type Target = vk::Semaphore;
@@ -33,3 +37,5 @@ impl std::ops::Deref for Semaphore {
         return &self.semaphore;
     }
 }
+
+//-----------------------------------------------------------------------------

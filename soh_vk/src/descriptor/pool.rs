@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Pool {
     device: crate::DeviceRef,
@@ -7,6 +9,7 @@ pub struct Pool {
     pool: vk::DescriptorPool,
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Pool {
     pub fn new(
@@ -47,6 +50,7 @@ impl Pool {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Pool {
     pub fn allocate_set(&self, layout: &super::SetLayout) -> Result<super::Set> {
@@ -92,6 +96,7 @@ impl Pool {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Pool {
     type Target = vk::DescriptorPool;
@@ -100,3 +105,5 @@ impl std::ops::Deref for Pool {
         return &self.pool;
     }
 }
+
+//-----------------------------------------------------------------------------

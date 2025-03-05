@@ -12,6 +12,7 @@ pub struct RenderPass {
 }
 
 //-----------------------------------------------------------------------------
+
 #[derive(Clone, Copy)]
 pub struct Attachment {
     pub format: crate::Format,
@@ -24,8 +25,10 @@ pub struct Attachment {
     pub final_layout: crate::ImageLayout,
 }
 
+//-----------------------------------------------------------------------------
 pub type LoadOp = vk::AttachmentLoadOp;
 pub type StoreOp = vk::AttachmentStoreOp;
+//-----------------------------------------------------------------------------
 
 impl From<Attachment> for vk::AttachmentDescription {
     fn from(value: Attachment) -> Self {
@@ -38,7 +41,7 @@ impl From<Attachment> for vk::AttachmentDescription {
             32 => vk::SampleCountFlags::TYPE_32,
             64 => vk::SampleCountFlags::TYPE_64,
             _ => {
-                panic!("The sample count for attachment must be a power of two");
+                panic!("The sample count for attachment must be a power of two up to 64");
             }
         };
 
@@ -70,7 +73,6 @@ impl Default for Attachment {
 }
 
 //-----------------------------------------------------------------------------
-
 // Constructor, destructor
 impl RenderPass {
     /// Create render pass with only one color attachment with specified format
@@ -146,6 +148,7 @@ impl RenderPass {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for RenderPass {
     type Target = vk::RenderPass;

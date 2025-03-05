@@ -1,11 +1,14 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Surface {
     instance: crate::InstanceRef,
     surface: vk::SurfaceKHR,
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Surface {
     pub fn new(instance: &crate::InstanceRef, window: &winit::window::Window) -> Result<Surface> {
@@ -108,6 +111,7 @@ impl Surface {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Surface {
     type Target = vk::SurfaceKHR;
@@ -116,3 +120,5 @@ impl std::ops::Deref for Surface {
         return &self.surface;
     }
 }
+
+//-----------------------------------------------------------------------------

@@ -1,4 +1,6 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
+//-----------------------------------------------------------------------------
 
 pub struct Buffer {
     buffer: crate::Buffer,
@@ -7,6 +9,7 @@ pub struct Buffer {
     vertex_description: super::VertexDescription,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Buffer {
     pub fn buffer(&self) -> &crate::Buffer {
@@ -20,6 +23,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Buffer {
     pub fn new<T>(context: &crate::VulkanContext, data: &[T]) -> Result<Self>
@@ -44,3 +48,5 @@ impl Buffer {
         self.buffer.free();
     }
 }
+
+//-----------------------------------------------------------------------------

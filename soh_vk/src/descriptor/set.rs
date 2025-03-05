@@ -1,4 +1,6 @@
+//-----------------------------------------------------------------------------
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Set {
     device: crate::DeviceRef,
@@ -6,6 +8,7 @@ pub struct Set {
     set: vk::DescriptorSet,
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Set {
     /// Write each uniform buffer to it's binding:
@@ -40,12 +43,13 @@ impl Set {
          */
         let descriptor_writes = uniform_buffers
             .iter()
-            .map(|&(binding, _)| {
+            .enumerate()
+            .map(|(idx, &(binding, _))| {
                 return vk::WriteDescriptorSet::default()
                     .dst_set(**self)
                     .dst_binding(binding)
                     .descriptor_type(vk::DescriptorType::UNIFORM_BUFFER)
-                    .buffer_info(&buffer_infos[binding as usize]);
+                    .buffer_info(&buffer_infos[idx]);
             })
             .collect::<Vec<_>>();
 
@@ -62,6 +66,7 @@ impl Set {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Set {
     type Target = vk::DescriptorSet;
@@ -70,3 +75,5 @@ impl std::ops::Deref for Set {
         return &self.set;
     }
 }
+
+//-----------------------------------------------------------------------------

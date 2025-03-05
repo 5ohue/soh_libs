@@ -1,20 +1,51 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
-
+//-----------------------------------------------------------------------------
 const DYNAMIC_STATES: &[vk::DynamicState] =
     &[vk::DynamicState::VIEWPORT, vk::DynamicState::SCISSOR];
+//-----------------------------------------------------------------------------
 
 pub struct Pipeline {
     device: crate::DeviceRef,
 
     pipeline: vk::Pipeline,
     pipeline_layout: vk::PipelineLayout,
+    blend_mode: BlendMode,
 }
 
+//-----------------------------------------------------------------------------
+/// Common blending modes
+#[derive(Clone, Copy, Debug, Default)]
+pub enum BlendMode {
+    /// No blending
+    #[default]
+    None,
+    /// Standard alpha blending
+    Alpha,
+    /// Additive blending
+    Additive,
+    /// Multiplicative blending
+    Multiply,
+    /// Custom blending with specific blend factors and operations
+    Custom {
+        src_color_factor: vk::BlendFactor,
+        dst_color_factor: vk::BlendFactor,
+        color_op: vk::BlendOp,
+        src_alpha_factor: vk::BlendFactor,
+        dst_alpha_factor: vk::BlendFactor,
+        alpha_op: vk::BlendOp,
+    },
+}
+
+//-----------------------------------------------------------------------------
 // Getters
 impl Pipeline {
     pub fn layout(&self) -> vk::PipelineLayout {
         return self.pipeline_layout;
+    }
+    pub fn blend_mode(&self) -> BlendMode {
+        return self.blend_mode;
     }
 }
 
@@ -27,6 +58,7 @@ impl Pipeline {
         vertex_descriptions: &[crate::vertex::VertexDescription],
         vertex_shader: &crate::Shader,
         fragment_shader: &crate::Shader,
+        blend_mode: BlendMode,
     ) -> Result<Self> {
         /*
          * Describe the programmable stages
@@ -91,26 +123,7 @@ impl Pipeline {
         /*
          * Color blending
          */
-        let color_blend_attachment = vk::PipelineColorBlendAttachmentState::default()
-            .color_write_mask(vk::ColorComponentFlags::RGBA)
-            .blend_enable(false)
-            .src_color_blend_factor(vk::BlendFactor::ONE)
-            .dst_color_blend_factor(vk::BlendFactor::ZERO)
-            .color_blend_op(vk::BlendOp::ADD)
-            .src_alpha_blend_factor(vk::BlendFactor::ONE)
-            .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
-            .alpha_blend_op(vk::BlendOp::ADD);
-        /*** Blending pseudocode: ***/
-        /*
-         * if (blendEnable) {
-         *     finalColor.rgb = (srcColorBlendFactor * newColor.rgb) <colorBlendOp> (dstColorBlendFactor * oldColor.rgb);
-         *     finalColor.a   = (srcAlphaBlendFactor * newColor.a)   <alphaBlendOp> (dstAlphaBlendFactor * oldColor.a);
-         * } else {
-         *     finalColor = newColor;
-         * }
-         *
-         * finalColor = finalColor & colorWriteMask
-         */
+        let color_blend_attachment = blend_mode.to_vk_attachment();
 
         let color_blending = vk::PipelineColorBlendStateCreateInfo::default()
             .logic_op_enable(false)
@@ -155,6 +168,7 @@ impl Pipeline {
             device: device.clone(),
             pipeline: graphics_pipeline,
             pipeline_layout,
+            blend_mode,
         });
     }
 
@@ -167,6 +181,79 @@ impl Pipeline {
     }
 }
 
+//-----------------------------------------------------------------------------
+
+impl BlendMode {
+    /// Convert BlendMode to Vulkan blend state
+    fn to_vk_attachment(self) -> vk::PipelineColorBlendAttachmentState {
+        /*** Blending pseudocode: ***/
+        /*
+         * if (blendEnable) {
+         *     finalColor.rgb = (srcColorBlendFactor * newColor.rgb) <colorBlendOp> (dstColorBlendFactor * oldColor.rgb);
+         *     finalColor.a   = (srcAlphaBlendFactor * newColor.a)   <alphaBlendOp> (dstAlphaBlendFactor * oldColor.a);
+         * } else {
+         *     finalColor = newColor;
+         * }
+         *
+         * finalColor = finalColor & colorWriteMask
+         */
+
+        return match self {
+            BlendMode::None => vk::PipelineColorBlendAttachmentState::default()
+                .color_write_mask(vk::ColorComponentFlags::RGBA)
+                .blend_enable(false),
+
+            BlendMode::Alpha => vk::PipelineColorBlendAttachmentState::default()
+                .color_write_mask(vk::ColorComponentFlags::RGBA)
+                .blend_enable(true)
+                .src_color_blend_factor(vk::BlendFactor::SRC_ALPHA)
+                .dst_color_blend_factor(vk::BlendFactor::ONE_MINUS_SRC_ALPHA)
+                .color_blend_op(vk::BlendOp::ADD)
+                .src_alpha_blend_factor(vk::BlendFactor::ONE)
+                .dst_alpha_blend_factor(vk::BlendFactor::ZERO)
+                .alpha_blend_op(vk::BlendOp::ADD),
+
+            BlendMode::Additive => vk::PipelineColorBlendAttachmentState::default()
+                .color_write_mask(vk::ColorComponentFlags::RGBA)
+                .blend_enable(true)
+                .src_color_blend_factor(vk::BlendFactor::ONE)
+                .dst_color_blend_factor(vk::BlendFactor::ONE)
+                .color_blend_op(vk::BlendOp::ADD)
+                .src_alpha_blend_factor(vk::BlendFactor::ONE)
+                .dst_alpha_blend_factor(vk::BlendFactor::ZERO) // Keep the source alpha factor
+                .alpha_blend_op(vk::BlendOp::ADD),
+
+            BlendMode::Multiply => vk::PipelineColorBlendAttachmentState::default()
+                .color_write_mask(vk::ColorComponentFlags::RGBA)
+                .blend_enable(true)
+                .src_color_blend_factor(vk::BlendFactor::DST_COLOR)
+                .dst_color_blend_factor(vk::BlendFactor::ZERO)
+                .color_blend_op(vk::BlendOp::ADD)
+                .src_alpha_blend_factor(vk::BlendFactor::ONE)
+                .dst_alpha_blend_factor(vk::BlendFactor::ZERO) // Keep the source alpha factor
+                .alpha_blend_op(vk::BlendOp::ADD),
+
+            BlendMode::Custom {
+                src_color_factor,
+                dst_color_factor,
+                color_op,
+                src_alpha_factor,
+                dst_alpha_factor,
+                alpha_op,
+            } => vk::PipelineColorBlendAttachmentState::default()
+                .color_write_mask(vk::ColorComponentFlags::RGBA)
+                .blend_enable(true)
+                .src_color_blend_factor(src_color_factor)
+                .dst_color_blend_factor(dst_color_factor)
+                .color_blend_op(color_op)
+                .src_alpha_blend_factor(src_alpha_factor)
+                .dst_alpha_blend_factor(dst_alpha_factor)
+                .alpha_blend_op(alpha_op),
+        };
+    }
+}
+
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Pipeline {
     type Target = vk::Pipeline;
@@ -175,3 +262,5 @@ impl std::ops::Deref for Pipeline {
         return &self.pipeline;
     }
 }
+
+//-----------------------------------------------------------------------------

@@ -1,11 +1,14 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Fence {
     device: crate::DeviceRef,
     fence: vk::Fence,
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Fence {
     pub fn new(device: &crate::DeviceRef, signaled: bool) -> Result<Self> {
@@ -29,6 +32,7 @@ impl Fence {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Fence {
     pub fn wait(&self) {
@@ -52,6 +56,7 @@ impl Fence {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Fence {
     type Target = vk::Fence;
@@ -60,3 +65,5 @@ impl std::ops::Deref for Fence {
         return &self.fence;
     }
 }
+
+//-----------------------------------------------------------------------------

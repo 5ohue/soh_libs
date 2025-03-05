@@ -6,6 +6,8 @@ mod imp;
 use anyhow::Result;
 use ash::vk;
 
+//-----------------------------------------------------------------------------
+
 pub enum MsgSeverity {
     Verbose,
     Info,

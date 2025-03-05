@@ -266,7 +266,6 @@ impl Buffer {
 }
 
 //-----------------------------------------------------------------------------
-
 // Deref
 impl std::ops::Deref for Buffer {
     type Target = vk::CommandBuffer;

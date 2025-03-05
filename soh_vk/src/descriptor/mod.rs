@@ -12,6 +12,8 @@ pub use set_layout::*;
 
 use ash::vk;
 
+//-----------------------------------------------------------------------------
+
 #[derive(Debug, Clone, Copy)]
 pub struct SetLayoutBinding {
     pub descriptor_type: vk::DescriptorType,

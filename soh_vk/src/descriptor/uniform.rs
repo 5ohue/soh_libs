@@ -1,10 +1,13 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
+//-----------------------------------------------------------------------------
 
 pub struct Buffer {
     buffer: crate::Buffer,
     data_ptr: *mut std::ffi::c_void,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Buffer {
     pub fn buffer(&self) -> &crate::Buffer {
@@ -12,6 +15,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Buffer {
     pub fn new(device: &crate::DeviceRef, size: u64) -> Result<Self> {
@@ -38,6 +42,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Buffer {
     pub fn write<T>(&mut self, data: &[T]) -> Result<()>
@@ -56,3 +61,5 @@ impl Buffer {
         return Ok(());
     }
 }
+
+//-----------------------------------------------------------------------------

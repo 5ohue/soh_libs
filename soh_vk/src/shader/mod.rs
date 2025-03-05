@@ -3,14 +3,18 @@ mod manager;
 //-----------------------------------------------------------------------------
 pub use manager::*;
 //-----------------------------------------------------------------------------
+
 use anyhow::Result;
 use ash::vk;
+
+//-----------------------------------------------------------------------------
 
 pub struct Shader {
     device: crate::DeviceRef,
     shader: vk::ShaderModule,
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Shader {
     pub fn new(device: &crate::DeviceRef, shader_manager: &Manager, path: &str) -> Result<Shader> {
@@ -33,6 +37,7 @@ impl Shader {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Shader {
     type Target = vk::ShaderModule;

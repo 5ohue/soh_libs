@@ -1,7 +1,7 @@
 //-----------------------------------------------------------------------------
-
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Framebuffer {
     device: crate::DeviceRef,
@@ -12,6 +12,7 @@ pub struct Framebuffer {
     framebuffer: vk::Framebuffer,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Framebuffer {
     pub fn extent(&self) -> vk::Extent2D {
@@ -19,6 +20,7 @@ impl Framebuffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Framebuffer {
     /// Creates an array of framebuffers for each of the images in the swapchain
@@ -68,6 +70,7 @@ impl Framebuffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Framebuffer {
     pub fn get_viewport_scissor(&self) -> (vk::Viewport, vk::Rect2D) {
@@ -121,6 +124,7 @@ impl Framebuffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Framebuffer {
     type Target = vk::Framebuffer;

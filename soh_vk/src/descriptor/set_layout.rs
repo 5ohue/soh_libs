@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct SetLayout {
     device: crate::DeviceRef,
@@ -8,6 +10,7 @@ pub struct SetLayout {
     bindings: Vec<super::SetLayoutBinding>,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl SetLayout {
     pub fn bindings(&self) -> &[super::SetLayoutBinding] {
@@ -15,6 +18,7 @@ impl SetLayout {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, desctructor
 impl SetLayout {
     pub fn new(device: &crate::DeviceRef, bindings: &[super::SetLayoutBinding]) -> Result<Self> {
@@ -48,6 +52,7 @@ impl SetLayout {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for SetLayout {
     type Target = vk::DescriptorSetLayout;
@@ -56,3 +61,5 @@ impl std::ops::Deref for SetLayout {
         return &self.layout;
     }
 }
+
+//-----------------------------------------------------------------------------

@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Pool {
     device: crate::DeviceRef,
@@ -8,6 +10,7 @@ pub struct Pool {
     queue_family_index: u32,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Pool {
     pub fn queue_family_index(&self) -> u32 {
@@ -15,6 +18,7 @@ impl Pool {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Pool {
     /// Creates a command pool that is used to do graphics operations
@@ -58,6 +62,7 @@ impl Pool {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Pool {
     pub fn allocate_buffer(&self, level: super::BufferLevel) -> Result<super::Buffer> {
@@ -113,6 +118,7 @@ impl Pool {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Pool {
     type Target = vk::CommandPool;
@@ -121,3 +127,5 @@ impl std::ops::Deref for Pool {
         return &self.cmd_pool;
     }
 }
+
+//-----------------------------------------------------------------------------

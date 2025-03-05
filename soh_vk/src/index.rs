@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Buffer {
     buffer: crate::Buffer,
@@ -8,6 +10,7 @@ pub struct Buffer {
     index_type: vk::IndexType,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Buffer {
     pub fn buffer(&self) -> &crate::Buffer {
@@ -21,6 +24,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Buffer {
     pub fn new_u16(context: &crate::VulkanContext, indexes: &[u16]) -> Result<Self> {
@@ -57,3 +61,5 @@ impl Buffer {
         self.buffer.free();
     }
 }
+
+//-----------------------------------------------------------------------------

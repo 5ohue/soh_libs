@@ -1,6 +1,8 @@
+//-----------------------------------------------------------------------------
 use anyhow::Result;
 use ash::vk;
 use std::ffi::CStr;
+//-----------------------------------------------------------------------------
 
 pub struct Instance {
     instance: ash::Instance,
@@ -11,9 +13,10 @@ pub struct Instance {
     instance_surface: ash::khr::surface::Instance,
 }
 
+//-----------------------------------------------------------------------------
 /// Instance reference stored inside the dependant types (which is the logical device mainly)
 pub type InstanceRef = std::rc::Rc<Instance>;
-
+//-----------------------------------------------------------------------------
 // Getters
 impl Instance {
     pub fn entry(&self) -> &ash::Entry {
@@ -33,6 +36,7 @@ impl Instance {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Instance {
     pub fn new(
@@ -122,6 +126,7 @@ impl Instance {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Drop
 impl Drop for Instance {
     fn drop(&mut self) {
@@ -131,6 +136,7 @@ impl Drop for Instance {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Instance {
     fn get_extensions(surface_platform: crate::wsi::Platform) -> Vec<&'static CStr> {
@@ -207,6 +213,7 @@ impl Instance {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Instance {
     type Target = ash::Instance;
@@ -215,3 +222,5 @@ impl std::ops::Deref for Instance {
         return &self.instance;
     }
 }
+
+//-----------------------------------------------------------------------------

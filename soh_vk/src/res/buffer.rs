@@ -1,5 +1,7 @@
+//-----------------------------------------------------------------------------
 use anyhow::{anyhow, Result};
 use ash::vk;
+//-----------------------------------------------------------------------------
 
 pub struct Buffer {
     device: crate::DeviceRef,
@@ -12,6 +14,7 @@ pub struct Buffer {
     properties: crate::MemoryPropertyFlags,
 }
 
+//-----------------------------------------------------------------------------
 // Getters
 impl Buffer {
     pub fn buffer(&self) -> vk::Buffer {
@@ -31,6 +34,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Constructor, destructor
 impl Buffer {
     pub fn new(
@@ -118,6 +122,9 @@ impl Buffer {
         return Ok(buffer);
     }
 
+    /// Create a buffer using a staging buffer.
+    /// This method creates a host-visible temporary staging buffer, copies the data into it, and
+    /// then transfers the data to a device-local ( faster to use by GPU ) buffer.
     pub fn new_staged<T>(
         device: &crate::DeviceRef,
         pool: &crate::cmd::Pool,
@@ -232,6 +239,7 @@ impl Buffer {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Deref
 impl std::ops::Deref for Buffer {
     type Target = vk::Buffer;
@@ -240,3 +248,5 @@ impl std::ops::Deref for Buffer {
         return &self.buffer;
     }
 }
+
+//-----------------------------------------------------------------------------
