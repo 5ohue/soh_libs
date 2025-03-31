@@ -3,6 +3,45 @@ use proc_macro::TokenStream;
 use quote::quote;
 //-----------------------------------------------------------------------------
 
+struct VecData {
+    struct_name: syn::Ident,
+    ttype: syn::GenericParam,
+
+    num_of_fields: usize,
+    field_names: Vec<syn::Ident>,        // Each field identifier
+    field_types: Vec<syn::GenericParam>, // Each field type ( T repeated N times )
+    field_indexes: Vec<syn::Index>,      // Number index for each field
+}
+
+fn get_data(input: &syn::ItemStruct) -> VecData {
+    let struct_name = &input.ident;
+    let ttype = input.generics.params.iter().next().unwrap();
+
+    let syn::Fields::Named(fields) = &input.fields else {
+        panic!("Fields must be named!");
+    };
+
+    let num_of_fields = fields.named.len();
+    let field_names = fields
+        .named
+        .iter()
+        .filter_map(|field| field.ident.clone())
+        .collect::<Vec<_>>();
+    let field_indexes = (0..num_of_fields).map(syn::Index::from).collect::<Vec<_>>();
+    let field_types = vec![ttype.clone(); num_of_fields];
+
+    return VecData {
+        struct_name: struct_name.clone(),
+        ttype: ttype.clone(),
+
+        num_of_fields,
+        field_names,
+        field_types,
+        field_indexes,
+    };
+}
+
+//-----------------------------------------------------------------------------
 /// This attribute implements a lot of the generic stuff for vectors:
 /// - Derive macros ( Debug, Copy, etc... )
 /// - Operator overloads ( add, sub, mul, div )
@@ -13,25 +52,14 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
     // Parse input
     let input = syn::parse_macro_input!(item as syn::ItemStruct);
 
-    // Get struct info
-    let struct_name = &input.ident;
-    let ttype = input.generics.params.iter().next().unwrap();
-
-    let syn::Fields::Named(fields) = &input.fields else {
-        panic!("Fields must be named!");
-    };
-    let field = fields
-        .named
-        .iter()
-        .filter_map(|field| field.ident.clone())
-        .collect::<Vec<_>>();
-
-    // Info for quote!
-    let num_of_fields = field.len();
-    let indexes = (0..num_of_fields).map(syn::Index::from).collect::<Vec<_>>();
-    let float_types = (0..num_of_fields)
-        .map(|_| ttype.clone())
-        .collect::<Vec<_>>();
+    let VecData {
+        struct_name,
+        ttype,
+        num_of_fields,
+        field_names,
+        field_types,
+        field_indexes,
+    } = get_data(&input);
 
     // Use hypot for 2D length
     let len_impl = if num_of_fields == 2 {
@@ -60,9 +88,9 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             #ttype: Copy,
         {
             /// Constructor
-            pub const fn new(#(#field: #ttype),*) -> Self {
+            pub const fn new(#(#field_names: #ttype),*) -> Self {
                 return #struct_name {
-                    #(#field,)*
+                    #(#field_names,)*
                 };
             }
 
@@ -72,7 +100,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
                 Func: FnMut(#ttype) -> U,
             {
                 return #struct_name {
-                    #(#field: f(self.#field),)*
+                    #(#field_names: f(self.#field_names),)*
                 };
             }
 
@@ -81,7 +109,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             where
                 Func: FnMut(&mut #ttype),
             {
-                #(f(&mut self.#field);)*
+                #(f(&mut self.#field_names);)*
             }
         }
 
@@ -91,15 +119,9 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         where
             #ttype: crate::traits::WholeConsts,
         {
-            const ZERO: Self = #struct_name {
-                #(#field: #ttype::ZERO),*
-            };
-            const ONE: Self = #struct_name {
-                #(#field: #ttype::ONE),*
-            };
-            const TWO: Self = #struct_name {
-                #(#field: #ttype::TWO),*
-            };
+            const ZERO: Self = #struct_name { #(#field_names: #ttype::ZERO),* };
+            const ONE:  Self = #struct_name { #(#field_names: #ttype::ONE),* };
+            const TWO:  Self = #struct_name { #(#field_names: #ttype::TWO),* };
         }
 
         impl<#ttype> #struct_name<#ttype>
@@ -130,25 +152,25 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         {
             /// Calculate the squared len of the vector (faster than [Self::len])
             pub fn len2(&self) -> #ttype {
-                return #(self.#field * self.#field)+*;
+                return #(self.#field_names * self.#field_names)+*;
             }
 
             /// Calculate the dot product of two vectors
             pub fn dot(vec1: &Self, vec2: &Self) -> #ttype {
-                return #(vec1.#field * vec2.#field)+*;
+                return #(vec1.#field_names * vec2.#field_names)+*;
             }
 
             /// Component vise multiplication
             pub fn mul(vec1: &Self, vec2: &Self) -> Self {
                 return #struct_name {
-                    #(#field: vec1.#field * vec2.#field),*
+                    #(#field_names: vec1.#field_names * vec2.#field_names),*
                 };
             }
 
             /// Component vise division
             pub fn div(vec1: &Self, vec2: &Self) -> Self {
                 return #struct_name {
-                    #(#field: vec1.#field / vec2.#field),*
+                    #(#field_names: vec1.#field_names / vec2.#field_names),*
                 };
             }
         }
@@ -185,95 +207,77 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         {
             fn convert(&self) -> #struct_name<D> {
                 return #struct_name {
-                    #(#field: self.#field.into(), )*
+                    #(#field_names: self.#field_names.into(), )*
                 };
             }
         }
 
-        // Operator overloads
-        impl<#ttype> std::ops::Add for #struct_name<#ttype>
-        where
-            #ttype: num_traits::Num,
-        {
-            type Output = Self;
-
-            fn add(self, rhs: Self) -> Self::Output {
-                return #struct_name {
-                    #(#field: self.#field + rhs.#field, )*
-                };
-            }
-        }
-        impl<#ttype> std::ops::AddAssign for #struct_name<#ttype>
-        where
-            #ttype: std::ops::AddAssign,
-        {
-            fn add_assign(&mut self, rhs: Self) {
-                #(self.#field += rhs.#field;)*
-            }
+        // Operator implementations
+        macro_rules! impl_op {
+            ($trait:ident, $fn:ident, $op:tt) => {
+                impl<#ttype> std::ops::$trait for #struct_name<#ttype>
+                where
+                    #ttype: std::ops::$trait<Output = #ttype>,
+                {
+                    type Output = Self;
+                    fn $fn(self, rhs: Self) -> Self::Output {
+                        return Self { #(#field_names: self.#field_names $op rhs.#field_names),* };
+                    }
+                }
+            };
         }
 
-        impl<#ttype> std::ops::Sub for #struct_name<#ttype>
-        where
-            #ttype: num_traits::Num,
-        {
-            type Output = Self;
-
-            fn sub(self, rhs: Self) -> Self::Output {
-                return #struct_name {
-                    #(#field: self.#field - rhs.#field, )*
-                };
-            }
-        }
-        impl<#ttype> std::ops::SubAssign for #struct_name<#ttype>
-        where
-            #ttype: std::ops::SubAssign,
-        {
-            fn sub_assign(&mut self, rhs: Self) {
-                #(self.#field -= rhs.#field;)*
-            }
+        macro_rules! impl_op_assign {
+            ($trait:ident, $fn:ident, $op:tt) => {
+                impl<#ttype> std::ops::$trait for #struct_name<#ttype>
+                where
+                    #ttype: std::ops::$trait,
+                {
+                    fn $fn(&mut self, rhs: Self) {
+                        #(self.#field_names $op rhs.#field_names;)*
+                    }
+                }
+            };
         }
 
-        impl<#ttype> std::ops::Mul<#ttype> for #struct_name<#ttype>
-        where
-            #ttype: num_traits::Num + Copy,
-        {
-            type Output = Self;
-
-            fn mul(self, rhs: #ttype) -> Self::Output {
-                return #struct_name {
-                    #(#field: self.#field * rhs, )*
-                };
-            }
-        }
-        impl<#ttype> std::ops::MulAssign<#ttype> for #struct_name<#ttype>
-        where
-            #ttype: std::ops::MulAssign<#ttype> + Copy,
-        {
-            fn mul_assign(&mut self, rhs: #ttype) {
-                #(self.#field *= rhs;)*
-            }
+        macro_rules! impl_scalar_op {
+            ($trait:ident, $fn:ident, $op:tt) => {
+                impl<#ttype> std::ops::$trait<#ttype> for #struct_name<#ttype>
+                where
+                    #ttype: std::ops::$trait<Output = #ttype> + Copy,
+                {
+                    type Output = Self;
+                    fn $fn(self, rhs: #ttype) -> Self::Output {
+                        return Self { #(#field_names: self.#field_names $op rhs),* };
+                    }
+                }
+            };
         }
 
-        impl<#ttype> std::ops::Div<#ttype> for #struct_name<#ttype>
-        where
-            #ttype: num_traits::Num + Copy,
-        {
-            type Output = Self;
+        macro_rules! impl_scalar_op_assign {
+            ($trait:ident, $fn:ident, $op:tt) => {
+                impl<#ttype> std::ops::$trait<#ttype> for #struct_name<#ttype>
+                where
+                    #ttype: std::ops::$trait + Copy,
+                {
+                    fn $fn(&mut self, rhs: #ttype) {
+                        #(self.#field_names $op rhs;)*
+                    }
+                }
+            };
+        }
 
-            fn div(self, rhs: #ttype) -> Self::Output {
-                return #struct_name {
-                    #(#field: self.#field / rhs, )*
-                };
-            }
-        }
-        impl<#ttype> std::ops::DivAssign<#ttype> for #struct_name<#ttype>
-        where
-            #ttype: std::ops::DivAssign<#ttype> + Copy,
-        {
-            fn div_assign(&mut self, rhs: #ttype) {
-                #( self.#field /= rhs; )*
-            }
-        }
+        impl_op!(Add, add, +);
+        impl_op_assign!(AddAssign, add_assign, +=);
+
+        impl_op!(Sub, sub, -);
+        impl_op_assign!(SubAssign, sub_assign, -=);
+
+        impl_scalar_op!(Mul, mul, *);
+        impl_scalar_op_assign!(MulAssign, mul_assign, *=);
+
+        impl_scalar_op!(Div, div, /);
+        impl_scalar_op_assign!(DivAssign, div_assign, /=);
 
         impl<#ttype> std::ops::Neg for #struct_name<#ttype>
         where
@@ -283,7 +287,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
 
             fn neg(self) -> Self::Output {
                 return #struct_name {
-                    #( #field: -self.#field, )*
+                    #( #field_names: -self.#field_names, )*
                 }
             }
         }
@@ -296,9 +300,9 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
             fn from_iter<I: IntoIterator<Item = #ttype>>(iter: I) -> Self {
                 let mut iter = iter.into_iter();
 
-            #(let #field = iter.next().unwrap_or_default();)*
+            #(let #field_names = iter.next().unwrap_or_default();)*
 
-                return #struct_name { #(#field, )* };
+                return #struct_name { #(#field_names, )* };
             }
         }
 
@@ -311,7 +315,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         // {
         //     fn from(value: #struct_name<S>) -> #struct_name<D> {
         //         return #struct_name {
-        //             #(#field: self.#field.into(), )*
+        //             #(#field_names: self.#field_names.into(), )*
         //         };
         //     }
         // }
@@ -322,7 +326,7 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         {
             fn from(value: [#ttype; #num_of_fields]) -> Self {
                 return #struct_name {
-                    #(#field: value[#indexes],)*
+                    #(#field_names: value[#field_indexes],)*
                 };
             }
         }
@@ -333,29 +337,29 @@ pub fn impl_vec(_attr: TokenStream, item: TokenStream) -> TokenStream {
         {
             fn from(value: #struct_name<#ttype>) -> Self {
                 return [
-                    #(value.#field),*
+                    #(value.#field_names),*
                 ];
             }
         }
 
-        impl<#ttype> From<( #(#float_types),* )> for #struct_name<#ttype>
+        impl<#ttype> From<( #(#field_types),* )> for #struct_name<#ttype>
         where
             #ttype: Copy,
         {
-            fn from(value: ( #(#float_types),* )) -> Self {
+            fn from(value: ( #(#field_types),* )) -> Self {
                 return #struct_name {
-                    #(#field: value.#indexes,)*
+                    #(#field_names: value.#field_indexes,)*
                 };
             }
         }
 
-        impl<#ttype> From<#struct_name<#ttype>> for ( #(#float_types),* )
+        impl<#ttype> From<#struct_name<#ttype>> for ( #(#field_types),* )
         where
             #ttype: Copy,
         {
             fn from(value: #struct_name<#ttype>) -> Self {
                 return (
-                    #(value.#field),*
+                    #(value.#field_names),*
                 );
             }
         }
