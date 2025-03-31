@@ -8,6 +8,7 @@ macro_impl_vec = { path = "./macro_impl_vec" }
 serde = { workspace = true, optional = true }
 num-traits = { workspace = true }
 f128_num = { workspace = true, optional = true }
+rust-hsluv = "0.1.4"
 
 [dev-dependencies]
 soh_rng = { workspace = true }

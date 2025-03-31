@@ -7,10 +7,12 @@ edition.workspace = true
 soh_vk_derive = { path = "./soh_vk_derive" }
 soh_log = { workspace = true }
 soh_math = { workspace = true }
+
 anyhow = { workspace = true }
 ash = { workspace = true }
+smallvec = { workspace = true }
 winit = { workspace = true }
-shaderc = { version = "<1.0", features = [ "build-from-source" ] }
+shaderc = { version = "<=0.9", features = [ "build-from-source" ] }
 
 [lints]
 workspace = true

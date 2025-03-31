@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------------
-use anyhow::{anyhow, Result};
+use anyhow::Result;
 use std::path::Path;
 //-----------------------------------------------------------------------------
 
@@ -68,12 +68,10 @@ pub struct Manager {
 impl Manager {
     pub fn new(mode: Mode, recompile: bool, directory: String) -> Result<Manager> {
         // Create compiler
-        let compiler =
-            shaderc::Compiler::new().ok_or(anyhow!("shaderc::Compiler::new() failed"))?;
+        let compiler = shaderc::Compiler::new()?;
 
         // Create options
-        let mut options = shaderc::CompileOptions::new()
-            .ok_or(anyhow!("shaderc::CompileOptions::new() failed"))?;
+        let mut options = shaderc::CompileOptions::new()?;
 
         options.set_source_language(shaderc::SourceLanguage::GLSL);
         options.set_optimization_level(shaderc::OptimizationLevel::Performance);
