@@ -5,7 +5,7 @@ use soh_math::{Mat3, Mat4, Vec3};
 ///
 /// This struct which has:
 /// 1. Position and look direction axis
-///     Axis are (in order): left, up, forward
+///    Axis are (in order): left, up, forward
 /// 2. FOV, aspect ratio, near and far planes
 pub struct Camera {
     /*
@@ -183,6 +183,7 @@ impl Camera {
 //-----------------------------------------------------------------------------
 // 4x4 matrix implementation
 impl Camera {
+    // Update the view matrix based on the camera's position and axis
     fn update_view(&mut self) -> Mat4<f32> {
         let axis_inverse = self.axis.t();
         let pos_inverse = -axis_inverse * self.pos;
@@ -191,10 +192,11 @@ impl Camera {
         return self.view;
     }
 
+    // Update the projection matrix with a perspective transformation
     fn update_proj(&mut self) -> Mat4<f32> {
         let mut proj = Mat4::perspective(self.fov, self.aspect, self.near, self.far);
 
-        // Flip X and Y
+        // Flip X and Y axes to invert camera orientation
         *proj.at_mut(0, 0) = -proj.at(0, 0);
         *proj.at_mut(1, 1) = -proj.at(1, 1);
 

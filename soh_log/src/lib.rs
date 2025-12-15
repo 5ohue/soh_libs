@@ -75,11 +75,11 @@ impl std::fmt::Display for Prio {
 /// The following macros are provided to simplify logging with the global logger:
 ///
 /// - `open_logfile!($filepath)`: Opens a log file at the specified file path. (By default no file
-///     is opened and messages are only logged to stderr).
+///   is opened and messages are only logged to stderr).
 /// - `set_min_priority_stderr!($priority)`: Sets the minimum priority that should be logged to
-///     stderr.
+///   stderr.
 /// - `set_min_priority_file!($priority)`: Sets the minimum priority that should be logged
-///     to the file.
+///   to the file.
 ///
 /// - `log_fatal!(...)`: Logs a fatal message.
 /// - `log_error!(...)`: Logs an error message.
