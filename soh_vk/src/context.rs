@@ -161,7 +161,7 @@ impl VulkanContext {
         let image_available_semaphores = (0..num_of_frames)
             .map(|_| crate::sync::Semaphore::new(&device).unwrap_log())
             .collect();
-        let render_finished_semaphores = (0..num_of_frames)
+        let render_finished_semaphores = (0..swapchain.num_of_images())
             .map(|_| crate::sync::Semaphore::new(&device).unwrap_log())
             .collect();
         let in_flight_fences = (0..num_of_frames)
@@ -199,11 +199,21 @@ impl VulkanContext {
     pub fn destroy(&self) {
         self.device.wait_idle();
 
-        for i in 0..self.num_of_frames_in_flight() {
-            self.in_flight_fences[i].destroy();
-            self.render_finished_semaphores[i].destroy();
-            self.image_available_semaphores[i].destroy();
-        }
+        self.in_flight_fences.iter().for_each(|fence| {
+            fence.destroy();
+        });
+
+        self.image_available_semaphores
+            .iter()
+            .for_each(|swapchain| {
+                swapchain.destroy();
+            });
+
+        self.render_finished_semaphores
+            .iter()
+            .for_each(|swapchain| {
+                swapchain.destroy();
+            });
 
         self.cmd_pool_transfer.destroy();
         self.cmd_pool_graphics.destroy();
@@ -239,7 +249,6 @@ impl VulkanContext {
          */
         let cmd_buffer = &self.cmd_buffers[frame_idx];
         let image_available_semaphore = &self.image_available_semaphores[frame_idx];
-        let render_finished_semaphore = &self.render_finished_semaphores[frame_idx];
         let in_flight_fence = &self.in_flight_fences[frame_idx];
 
         /*
@@ -291,6 +300,21 @@ impl VulkanContext {
          * Draw the frame
          */
         user_draw_func(per_frame_data)?;
+
+        /*
+         * Use image different semaphore per image.
+         *
+         * This fixes validation error spam due to attempts to signal an already signaled
+         * semaphore.
+         *
+         * If frame X didn't finish rendering yet but we try to render frame X again that results
+         * in the same semaphore being used again before it had a chance to be reset. Instead it
+         * should use the image specific semaphore. That way rendering synchronization would be
+         * image specific instead of frame specific.
+         *
+         * See https://github.com/Overv/VulkanTutorial/issues/407
+         */
+        let render_finished_semaphore = &self.render_finished_semaphores[image_idx];
 
         /*
          * Submit the command buffer to the graphics queue
@@ -397,6 +421,10 @@ impl VulkanContext {
             return Ok(crate::wsi::Platform::Win32);
         }
 
+        if cfg!(target_os = "macos") {
+            return Ok(crate::wsi::Platform::MacOS);
+        }
+
         if cfg!(target_os = "linux") {
             use winit::platform::{wayland::ActiveEventLoopExtWayland, x11::ActiveEventLoopExtX11};
 
@@ -408,9 +436,11 @@ impl VulkanContext {
             if event_loop.is_wayland() {
                 return Ok(crate::wsi::Platform::Wayland);
             }
+
+            anyhow::bail!("Weird platform on linux: neither X11 nor wayland");
         }
 
-        anyhow::bail!("Weird platform on linux: neither X11 nor wayland");
+        anyhow::bail!("Unsupported WSI platform");
     }
 }
 
