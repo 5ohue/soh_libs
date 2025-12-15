@@ -10,30 +10,80 @@ pub struct Pool {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
-impl Pool {
-    pub fn new(
-        device: &crate::DeviceRef,
-        num_of_uniform_descriptors: u32,
-        max_num_of_sets: u32,
-    ) -> Result<Self> {
+
+pub struct PoolBuilder {
+    max_num_of_sets: u32,
+    pool_sizes: smallvec::SmallVec<[(vk::DescriptorType, u32); 11]>,
+}
+
+impl PoolBuilder {
+    pub fn new() -> Self {
+        return PoolBuilder {
+            max_num_of_sets: 0,
+            pool_sizes: smallvec::smallvec![],
+        };
+    }
+
+    pub fn max_num_of_sets(mut self, count: u32) -> Self {
+        assert!(count > 0);
+        self.max_num_of_sets = count;
+        return self;
+    }
+
+    pub fn combined_sampler_descriptor_count(mut self, count: u32) -> Self {
+        assert!(count > 0);
+        self.pool_sizes
+            .push((vk::DescriptorType::COMBINED_IMAGE_SAMPLER, count));
+        return self;
+    }
+
+    pub fn uniform_descriptor_count(mut self, count: u32) -> Self {
+        assert!(count > 0);
+        self.pool_sizes
+            .push((vk::DescriptorType::UNIFORM_BUFFER, count));
+        return self;
+    }
+
+    pub fn storage_descriptor_count(mut self, count: u32) -> Self {
+        assert!(count > 0);
+        self.pool_sizes
+            .push((vk::DescriptorType::STORAGE_BUFFER, count));
+        return self;
+    }
+
+    pub fn build(self, device: &crate::DeviceRef) -> Result<Pool> {
+        /*
+         * Check values for sanity
+         */
+        if cfg!(debug_assertions) {
+            assert!(self.max_num_of_sets > 0);
+
+            let mut set = std::collections::HashSet::new();
+            for (ty, _) in self.pool_sizes.iter() {
+                set.insert(ty);
+            }
+
+            assert!(set.len() == self.pool_sizes.len());
+        }
+
         /*
          * Configure pool sizes
          */
-        let pool_sizes = [
-            // Uniform buffer pool size
-            vk::DescriptorPoolSize {
-                ty: vk::DescriptorType::UNIFORM_BUFFER,
-                descriptor_count: num_of_uniform_descriptors,
-            },
-        ];
+        let pool_sizes = self
+            .pool_sizes
+            .iter()
+            .map(|&(ty, count)| vk::DescriptorPoolSize {
+                ty,
+                descriptor_count: count,
+            })
+            .collect::<smallvec::SmallVec<[_; 11]>>();
 
         /*
          * Create pool
          */
         let create_info = vk::DescriptorPoolCreateInfo::default()
             .pool_sizes(&pool_sizes)
-            .max_sets(max_num_of_sets);
+            .max_sets(self.max_num_of_sets);
 
         let pool = unsafe { device.create_descriptor_pool(&create_info, None)? };
 
@@ -42,7 +92,17 @@ impl Pool {
             pool,
         });
     }
+}
 
+impl Default for PoolBuilder {
+    fn default() -> Self {
+        return Self::new();
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Destructor
+impl Pool {
     pub fn destroy(&self) {
         unsafe {
             self.device.destroy_descriptor_pool(self.pool, None);
