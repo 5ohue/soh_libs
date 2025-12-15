@@ -108,12 +108,18 @@ impl Device {
         /*
          * Get queues
          */
-        let graphics_queue =
-            Self::__get_queue(&device, physical.queue_family_indices().graphics_family);
-        let present_queue =
-            Self::__get_queue(&device, physical.queue_family_indices().present_family);
-        let transfer_queue =
-            Self::__get_queue(&device, physical.queue_family_indices().transfer_family);
+        let graphics_queue = Self::__get_queue(
+            &device,
+            physical.queue_family_idx(crate::QueueType::Graphics),
+        );
+        let present_queue = Self::__get_queue(
+            &device,
+            physical.queue_family_idx(crate::QueueType::Present),
+        );
+        let transfer_queue = Self::__get_queue(
+            &device,
+            physical.queue_family_idx(crate::QueueType::Transfer),
+        );
 
         return Ok(DeviceRef::new(Device {
             instance: instance.clone(),

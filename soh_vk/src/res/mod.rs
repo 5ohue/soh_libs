@@ -1,7 +1,11 @@
 //-----------------------------------------------------------------------------
 mod buffer;
+mod image;
+mod memory;
 //-----------------------------------------------------------------------------
-pub use buffer::Buffer;
+pub use buffer::*;
+pub use image::*;
+pub use memory::*;
 //-----------------------------------------------------------------------------
 
 use anyhow::Result;
@@ -11,14 +15,14 @@ use ash::vk;
 
 pub fn copy_buffer(
     device: &crate::Device,
-    pool: &crate::cmd::Pool,
+    transfer_pool: &crate::cmd::Pool,
     src: &Buffer,
     dst: &Buffer,
 ) -> Result<()> {
     /*
      * Create transfer command buffer
      */
-    let cmd_buf = pool.allocate_buffer(crate::cmd::BufferLevel::Primary)?;
+    let cmd_buf = transfer_pool.allocate_buffer(crate::cmd::BufferLevel::Primary)?;
 
     let begin_info =
         vk::CommandBufferBeginInfo::default().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
@@ -37,10 +41,23 @@ pub fn copy_buffer(
     cmd_buf.submit_and_wait()?;
 
     unsafe {
-        device.free_command_buffers(**pool, std::slice::from_ref(&cmd_buf));
+        device.free_command_buffers(**transfer_pool, std::slice::from_ref(&cmd_buf));
     }
 
     return Ok(());
+}
+
+//-----------------------------------------------------------------------------
+/// Get the pixel size in bytes for a particular format
+pub fn format_size(format: vk::Format) -> u64 {
+    match format {
+        vk::Format::R8G8B8A8_UNORM => 4,
+        vk::Format::R8G8B8A8_SRGB => 4,
+        vk::Format::B8G8R8A8_UNORM => 4,
+        vk::Format::B8G8R8A8_SRGB => 4,
+        vk::Format::R32G32B32A32_SFLOAT => 16,
+        _ => panic!("Unsupported format"),
+    }
 }
 
 //-----------------------------------------------------------------------------

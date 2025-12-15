@@ -4,7 +4,6 @@ use anyhow::Result;
 
 pub struct Buffer {
     buffer: crate::Buffer,
-    data_ptr: *mut std::ffi::c_void,
 }
 
 //-----------------------------------------------------------------------------
@@ -32,13 +31,9 @@ impl Buffer {
         /*
          * Map the memory ( to use "persistent mapping" )
          */
-        let data_ptr = buffer.map()?;
+        buffer.memory_mut().map()?;
 
-        return Ok(Buffer { buffer, data_ptr });
-    }
-
-    pub fn free(&self) {
-        self.buffer.free();
+        return Ok(Buffer { buffer });
     }
 }
 
@@ -49,16 +44,7 @@ impl Buffer {
     where
         T: Copy,
     {
-        let buffer_size = size_of_val(data) as u64;
-
-        anyhow::ensure!(
-            self.buffer.size() >= buffer_size,
-            "Buffer memory is smaller than the data that is being written to it"
-        );
-
-        unsafe { crate::Buffer::write_memory(self.data_ptr, data) };
-
-        return Ok(());
+        return self.buffer.memory_mut().write(data);
     }
 }
 

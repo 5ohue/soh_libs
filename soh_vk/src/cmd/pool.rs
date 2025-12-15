@@ -23,7 +23,9 @@ impl Pool {
 impl Pool {
     /// Creates a command pool that is used to do graphics operations
     pub fn new_graphics(device: &crate::DeviceRef) -> Result<Self> {
-        let graphics_family = device.physical().queue_family_indices().graphics_family;
+        let graphics_family = device
+            .physical()
+            .queue_family_idx(crate::QueueType::Graphics);
 
         let create_info = vk::CommandPoolCreateInfo::default()
             .flags(vk::CommandPoolCreateFlags::RESET_COMMAND_BUFFER)
@@ -40,7 +42,9 @@ impl Pool {
 
     /// Creates a command pool that is used to do data transfers
     pub fn new_transfer(device: &crate::DeviceRef) -> Result<Self> {
-        let transfer_family = device.physical().queue_family_indices().transfer_family;
+        let transfer_family = device
+            .physical()
+            .queue_family_idx(crate::QueueType::Transfer);
 
         let create_info = vk::CommandPoolCreateInfo::default()
             .flags(vk::CommandPoolCreateFlags::TRANSIENT)

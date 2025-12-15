@@ -56,10 +56,6 @@ impl Buffer {
             index_type: vk::IndexType::UINT32,
         });
     }
-
-    pub fn free(&self) {
-        self.buffer.free();
-    }
 }
 
 //-----------------------------------------------------------------------------

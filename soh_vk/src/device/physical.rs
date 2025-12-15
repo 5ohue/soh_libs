@@ -48,6 +48,15 @@ impl Device {
     pub fn gpu_name(&self) -> &str {
         return &self.info.name;
     }
+    pub fn queue_family_idx(&self, ty: crate::QueueType) -> u32 {
+        let indices = &self.info.queue_family_indices;
+
+        return match ty {
+            crate::QueueType::Graphics => indices.graphics_family,
+            crate::QueueType::Present => indices.present_family,
+            crate::QueueType::Transfer => indices.transfer_family,
+        };
+    }
     pub fn queue_family_indices(&self) -> &QueueFamilyIndices {
         return &self.info.queue_family_indices;
     }
@@ -129,6 +138,7 @@ impl Device {
     }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Device {
     #[inline(always)]

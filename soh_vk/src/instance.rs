@@ -47,9 +47,8 @@ impl Instance {
 
         /*
          * Load the vulkan library
-         * TODO: make it more cross platform
          */
-        let entry = unsafe { ash::Entry::load_from("/usr/lib/libvulkan.so")? };
+        let entry = Self::load_entry()?;
 
         /*
          * Get the required extensions and layers
@@ -139,6 +138,25 @@ impl Drop for Instance {
 //-----------------------------------------------------------------------------
 // Specific implementation
 impl Instance {
+    fn load_entry() -> Result<ash::Entry> {
+        // TODO: this should probably be done in a better way
+        let lib_path: &str = {
+            if cfg!(target_os = "windows") {
+                "vulkan-1.dll"
+            } else if cfg!(target_os = "linux") {
+                "/usr/lib/libvulkan.so"
+            } else if cfg!(target_os = "macos") {
+                "libvulkan.dylib"
+            } else {
+                todo!()
+            }
+        };
+
+        let entry = unsafe { ash::Entry::load_from(lib_path)? };
+
+        return Ok(entry);
+    }
+
     fn get_extensions(surface_platform: crate::wsi::Platform) -> Vec<&'static CStr> {
         /*
          * Require the VK_KHR_surface
@@ -158,6 +176,9 @@ impl Instance {
             }
             crate::wsi::Platform::Wayland => {
                 extensions.push(ash::khr::wayland_surface::NAME);
+            }
+            crate::wsi::Platform::MacOS => {
+                extensions.push(ash::mvk::macos_surface::NAME);
             }
         }
 

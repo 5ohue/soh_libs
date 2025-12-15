@@ -43,10 +43,6 @@ impl Buffer {
             vertex_description: T::get_vertex_description(),
         });
     }
-
-    pub fn free(&self) {
-        self.buffer.free();
-    }
 }
 
 //-----------------------------------------------------------------------------
