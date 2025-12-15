@@ -3,6 +3,7 @@
 #[rustfmt::skip]
 pub mod mat;
 pub mod color;
+pub mod fractal;
 pub mod imaginary;
 pub mod vec;
 //-----------------------------------------------------------------------------

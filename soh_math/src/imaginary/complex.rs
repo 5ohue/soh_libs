@@ -12,6 +12,15 @@ pub struct Complex<T> {
 
 //-----------------------------------------------------------------------------
 // Constructors
+impl<T> Default for Complex<T>
+where
+    T: WholeConsts,
+{
+    fn default() -> Self {
+        return Self::zero();
+    }
+}
+
 impl<T> Complex<T> {
     pub const fn new(real: T, imaginary: T) -> Self {
         return Complex {
@@ -70,10 +79,7 @@ where
 
     /// Create a complex number from length and angle
     pub fn from_param(length: T, angle: T) -> Self {
-        return Complex {
-            re: length * angle.cos(),
-            im: length * angle.sin(),
-        };
+        return Self::from_angle(angle) * length;
     }
 }
 
@@ -114,16 +120,13 @@ where
         let mut k: u32 = pow;
         let mut a: Complex<T> = *self;
 
-        loop {
+        while k != 0 {
             let n = k / 2;
             if 2 * n < k {
                 result *= a;
             }
             k = n;
             a *= a;
-            if k == 0 {
-                break;
-            }
         }
 
         return result;
