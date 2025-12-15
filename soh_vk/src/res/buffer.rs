@@ -33,7 +33,7 @@ impl Buffer {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructors
 impl Buffer {
     pub fn new(
         device: &crate::DeviceRef,
@@ -118,6 +118,8 @@ impl Buffer {
     where
         T: Copy,
     {
+        let buffer_size = size_of_val(data) as u64;
+
         /*
          * Create staging buffer (a host visible buffer with data written to it)
          */
@@ -128,7 +130,7 @@ impl Buffer {
          */
         let buffer = Self::new(
             device,
-            staging_buffer.size(),
+            buffer_size,
             usage | crate::BufferUsageFlags::TRANSFER_DST,
             crate::MemoryPropertyFlags::DEVICE_LOCAL,
         )?;
@@ -136,7 +138,7 @@ impl Buffer {
         /*
          * Copy from staging buffer to the result
          */
-        super::copy_buffer(device, transfer_pool, &staging_buffer, &buffer)?;
+        super::copy_buffer(device, transfer_pool, &staging_buffer, &buffer, buffer_size)?;
 
         return Ok(buffer);
     }

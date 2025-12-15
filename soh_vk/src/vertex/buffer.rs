@@ -24,7 +24,7 @@ impl Buffer {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Buffer {
     pub fn new<T>(context: &crate::VulkanContext, data: &[T]) -> Result<Self>
     where

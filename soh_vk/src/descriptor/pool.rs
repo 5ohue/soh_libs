@@ -10,7 +10,7 @@ pub struct Pool {
 }
 
 //-----------------------------------------------------------------------------
-
+// Builder
 pub struct PoolBuilder {
     max_num_of_sets: u32,
     pool_sizes: smallvec::SmallVec<[(vk::DescriptorType, u32); 11]>,
@@ -101,16 +101,6 @@ impl Default for PoolBuilder {
 }
 
 //-----------------------------------------------------------------------------
-// Destructor
-impl Pool {
-    pub fn destroy(&self) {
-        unsafe {
-            self.device.destroy_descriptor_pool(self.pool, None);
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
 // Specific implementation
 impl Pool {
     pub fn allocate_set(&self, layout: &super::SetLayout) -> Result<super::Set> {
@@ -153,6 +143,16 @@ impl Pool {
             .collect();
 
         return Ok(res);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Pool {
+    fn drop(&mut self) {
+        unsafe {
+            self.device.destroy_descriptor_pool(self.pool, None);
+        }
     }
 }
 

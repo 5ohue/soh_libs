@@ -39,13 +39,14 @@ pub fn setup_messenger(callback: MessengerCallback) {
 }
 
 //-----------------------------------------------------------------------------
-/// Debug messenger
+
 pub struct Messenger {
     instance: crate::InstanceRef,
     debug_messenger: vk::DebugUtilsMessengerEXT,
 }
 
-// Constructor, destructor
+//-----------------------------------------------------------------------------
+// Constructor
 impl Messenger {
     pub fn new(instance: &crate::InstanceRef) -> Result<Self> {
         use soh_log::LogError;
@@ -67,15 +68,9 @@ impl Messenger {
             debug_messenger: messenger,
         });
     }
-
-    pub fn destroy(&self) {
-        unsafe {
-            let instance = self.instance.instance_debug_utils();
-            instance.destroy_debug_utils_messenger(self.debug_messenger, None);
-        }
-    }
 }
 
+//-----------------------------------------------------------------------------
 // Specific implementation
 impl Messenger {
     pub(crate) fn create_info() -> Option<vk::DebugUtilsMessengerCreateInfoEXT<'static>> {
@@ -99,6 +94,17 @@ impl Messenger {
             .user_data(data_ptr);
 
         return Some(create_info);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Messenger {
+    fn drop(&mut self) {
+        unsafe {
+            let instance = self.instance.instance_debug_utils();
+            instance.destroy_debug_utils_messenger(self.debug_messenger, None);
+        }
     }
 }
 

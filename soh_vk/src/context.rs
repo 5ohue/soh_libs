@@ -132,7 +132,7 @@ impl VulkanContext {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl VulkanContext {
     pub fn bootstrap(bootstrap_info: ContextBootstrapInfo) -> Result<VulkanContext> {
         let num_of_frames = bootstrap_info.num_of_frames_in_flight as u32;
@@ -194,40 +194,6 @@ impl VulkanContext {
 
             shader_manager,
         });
-    }
-
-    pub fn destroy(&self) {
-        self.device.wait_idle();
-
-        self.in_flight_fences.iter().for_each(|fence| {
-            fence.destroy();
-        });
-
-        self.image_available_semaphores
-            .iter()
-            .for_each(|swapchain| {
-                swapchain.destroy();
-            });
-
-        self.render_finished_semaphores
-            .iter()
-            .for_each(|swapchain| {
-                swapchain.destroy();
-            });
-
-        self.cmd_pool_transfer.destroy();
-        self.cmd_pool_graphics.destroy();
-
-        for framebuffer in self.framebuffers.iter() {
-            framebuffer.destroy();
-        }
-        self.render_pass.destroy();
-        self.swapchain.destroy();
-        self.surface.destroy();
-
-        if let Some(ref debug_messenger) = self.debug_messenger {
-            debug_messenger.destroy();
-        }
     }
 }
 
@@ -441,6 +407,23 @@ impl VulkanContext {
         }
 
         anyhow::bail!("Unsupported WSI platform");
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for VulkanContext {
+    fn drop(&mut self) {
+        self.device.wait_idle();
+
+        for framebuffer in self.framebuffers.iter() {
+            framebuffer.destroy();
+        }
+        self.render_pass.destroy();
+        self.swapchain.destroy();
+        self.surface.destroy();
+
+        self.debug_messenger = None;
     }
 }
 

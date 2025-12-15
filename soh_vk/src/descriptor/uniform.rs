@@ -15,7 +15,7 @@ impl Buffer {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Buffer {
     pub fn new(device: &crate::DeviceRef, size: u64) -> Result<Self> {
         /*

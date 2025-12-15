@@ -113,6 +113,11 @@ impl Memory {
         memory_requirements: vk::MemoryRequirements,
         properties: vk::MemoryPropertyFlags,
     ) -> Result<Self> {
+        soh_log::log_debug!(
+            "Allocating {} bytes of GPU memory",
+            memory_requirements.size
+        );
+
         /*
          * Find which GPU memory type to use for allocation
          */
@@ -146,6 +151,8 @@ impl Memory {
 // Drop
 impl Drop for Memory {
     fn drop(&mut self) {
+        soh_log::log_debug!("Freeing {} bytes of GPU memory", self.size);
+
         unsafe {
             self.device.free_memory(**self, None);
         }

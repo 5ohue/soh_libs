@@ -25,7 +25,7 @@ impl Buffer {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Buffer {
     pub fn new_u16(context: &crate::VulkanContext, indexes: &[u16]) -> Result<Self> {
         let buffer = crate::Buffer::new_staged(

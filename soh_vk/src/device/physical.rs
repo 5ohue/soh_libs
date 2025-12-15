@@ -62,7 +62,8 @@ impl Device {
     }
 }
 
-// Constructor, destructor
+//-----------------------------------------------------------------------------
+// Constructor
 impl Device {
     pub fn pick_device(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<Self> {
         /*

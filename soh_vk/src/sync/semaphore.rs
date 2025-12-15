@@ -9,7 +9,7 @@ pub struct Semaphore {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Semaphore {
     pub fn new(device: &crate::DeviceRef) -> Result<Self> {
         let create_info = vk::SemaphoreCreateInfo::default();
@@ -20,8 +20,12 @@ impl Semaphore {
             semaphore,
         });
     }
+}
 
-    pub fn destroy(&self) {
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Semaphore {
+    fn drop(&mut self) {
         unsafe {
             self.device.destroy_semaphore(**self, None);
         }

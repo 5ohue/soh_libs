@@ -49,7 +49,8 @@ impl Pipeline {
     }
 }
 
-// Constructor, destructor
+//-----------------------------------------------------------------------------
+// Constructor
 impl Pipeline {
     pub fn new(
         device: &crate::DeviceRef,
@@ -171,18 +172,10 @@ impl Pipeline {
             blend_mode,
         });
     }
-
-    pub fn destroy(&self) {
-        unsafe {
-            self.device.destroy_pipeline(self.pipeline, None);
-            self.device
-                .destroy_pipeline_layout(self.pipeline_layout, None);
-        }
-    }
 }
 
 //-----------------------------------------------------------------------------
-
+// Specific implementation
 impl BlendMode {
     /// Convert BlendMode to Vulkan blend state
     fn to_vk_attachment(self) -> vk::PipelineColorBlendAttachmentState {
@@ -250,6 +243,18 @@ impl BlendMode {
                 .dst_alpha_blend_factor(dst_alpha_factor)
                 .alpha_blend_op(alpha_op),
         };
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Pipeline {
+    fn drop(&mut self) {
+        unsafe {
+            self.device.destroy_pipeline(self.pipeline, None);
+            self.device
+                .destroy_pipeline_layout(self.pipeline_layout, None);
+        }
     }
 }
 

@@ -19,7 +19,7 @@ impl SetLayout {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, desctructor
+// Constructor
 impl SetLayout {
     pub fn new(device: &crate::DeviceRef, bindings: &[super::SetLayoutBinding]) -> Result<Self> {
         let vk_bindings = bindings
@@ -44,8 +44,12 @@ impl SetLayout {
             bindings: bindings.to_vec(),
         });
     }
+}
 
-    pub fn destroy(&self) {
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for SetLayout {
+    fn drop(&mut self) {
         unsafe {
             self.device.destroy_descriptor_set_layout(self.layout, None);
         }

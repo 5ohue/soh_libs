@@ -13,7 +13,7 @@ pub struct Image {
 }
 
 //-----------------------------------------------------------------------------
-
+// Builder
 pub struct ImageBuilder {
     format: vk::Format,
     size: (u32, u32),
@@ -104,7 +104,7 @@ impl ImageBuilder {
             .queue_families
             .iter()
             .map(|&ty| device.physical().queue_family_idx(ty))
-            .collect::<std::collections::HashSet<_>>()
+            .collect::<std::collections::HashSet<_>>() // Make unique
             .iter()
             .copied()
             .collect::<Vec<_>>();
@@ -170,17 +170,6 @@ impl Image {
 }
 
 //-----------------------------------------------------------------------------
-// Destructor
-impl Image {
-    pub fn destroy(&mut self) {
-        self.free_memory();
-        unsafe {
-            self.device.destroy_image(self.image, None);
-        }
-    }
-}
-
-//-----------------------------------------------------------------------------
 // Specific implementation
 impl Image {
     pub fn allocate_memory(&mut self, properties: vk::MemoryPropertyFlags) -> Result<()> {
@@ -210,12 +199,17 @@ impl Image {
     }
 
     pub fn free_memory(&mut self) {
-        if let Some(ref memory) = self.memory {
-            unsafe {
-                self.device.free_memory(**memory, None);
-            }
+        self.memory = None;
+    }
+}
 
-            self.memory = None;
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Image {
+    fn drop(&mut self) {
+        self.free_memory();
+        unsafe {
+            self.device.destroy_image(self.image, None);
         }
     }
 }

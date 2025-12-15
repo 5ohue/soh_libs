@@ -18,7 +18,11 @@ pub fn copy_buffer(
     transfer_pool: &crate::cmd::Pool,
     src: &Buffer,
     dst: &Buffer,
+    size: u64,
 ) -> Result<()> {
+    assert!(size <= src.size());
+    assert!(size <= dst.size());
+
     /*
      * Create transfer command buffer
      */
@@ -28,7 +32,7 @@ pub fn copy_buffer(
         vk::CommandBufferBeginInfo::default().flags(vk::CommandBufferUsageFlags::ONE_TIME_SUBMIT);
 
     let copy_info = vk::BufferCopy {
-        size: u64::min(src.size(), dst.size()),
+        size,
         ..Default::default()
     };
 

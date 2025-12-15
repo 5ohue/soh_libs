@@ -15,7 +15,7 @@ pub struct Shader {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Shader {
     pub fn new(device: &crate::DeviceRef, shader_manager: &Manager, path: &str) -> Result<Shader> {
         let shader_code = shader_manager.get_shader(path)?;
@@ -29,8 +29,12 @@ impl Shader {
             shader,
         });
     }
+}
 
-    pub fn destroy(&self) {
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Shader {
+    fn drop(&mut self) {
         unsafe {
             self.device.destroy_shader_module(self.shader, None);
         }

@@ -9,7 +9,7 @@ pub struct Fence {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Fence {
     pub fn new(device: &crate::DeviceRef, signaled: bool) -> Result<Self> {
         let create_info = vk::FenceCreateInfo::default().flags(if signaled {
@@ -23,12 +23,6 @@ impl Fence {
             device: device.clone(),
             fence,
         });
-    }
-
-    pub fn destroy(&self) {
-        unsafe {
-            self.device.destroy_fence(self.fence, None);
-        }
     }
 }
 
@@ -52,6 +46,16 @@ impl Fence {
     pub fn reset(&self) {
         unsafe {
             let _ = self.device.reset_fences(std::slice::from_ref(self));
+        }
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Fence {
+    fn drop(&mut self) {
+        unsafe {
+            self.device.destroy_fence(self.fence, None);
         }
     }
 }

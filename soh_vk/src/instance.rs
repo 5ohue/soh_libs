@@ -37,7 +37,7 @@ impl Instance {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Instance {
     pub fn new(
         app_info: &vk::ApplicationInfo,
@@ -122,16 +122,6 @@ impl Instance {
             instance_debug_utils,
             instance_surface,
         }));
-    }
-}
-
-//-----------------------------------------------------------------------------
-// Drop
-impl Drop for Instance {
-    fn drop(&mut self) {
-        soh_log::log_info!("Destroying instance");
-
-        unsafe { self.instance.destroy_instance(None) };
     }
 }
 
@@ -231,6 +221,16 @@ impl Instance {
 
     fn cstr_to_ptr(arr: &[&CStr]) -> Vec<*const i8> {
         return arr.iter().map(|&cstr| cstr.as_ptr()).collect();
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Instance {
+    fn drop(&mut self) {
+        soh_log::log_info!("Destroying instance");
+
+        unsafe { self.instance.destroy_instance(None) };
     }
 }
 

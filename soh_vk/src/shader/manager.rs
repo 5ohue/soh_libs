@@ -12,7 +12,7 @@ pub enum Mode {
 }
 
 //-----------------------------------------------------------------------------
-
+// Builder
 pub struct ManagerBuilder {
     mode: Mode,
     recompile: bool,
@@ -65,6 +65,8 @@ pub struct Manager {
     directory: String,
 }
 
+//-----------------------------------------------------------------------------
+// Constructor
 impl Manager {
     pub fn new(mode: Mode, recompile: bool, directory: String) -> Result<Manager> {
         // Create compiler

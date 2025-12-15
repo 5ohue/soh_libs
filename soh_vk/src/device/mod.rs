@@ -57,7 +57,7 @@ impl Device {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Device {
     pub fn new(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<DeviceRef> {
         soh_log::log_info!("Creating logical device");
@@ -134,19 +134,6 @@ impl Device {
 }
 
 //-----------------------------------------------------------------------------
-// Drop
-impl Drop for Device {
-    fn drop(&mut self) {
-        soh_log::log_info!(
-            "Destroying logical device \"{}\"",
-            self.physical.info().name
-        );
-
-        unsafe { self.logical.destroy_device(None) };
-    }
-}
-
-//-----------------------------------------------------------------------------
 // Specific implementation
 impl Device {
     pub fn wait_idle(&self) {
@@ -162,6 +149,19 @@ impl Device {
 
     fn __get_queue(device: &ash::Device, queue_family_index: u32) -> vk::Queue {
         return unsafe { device.get_device_queue(queue_family_index, 0) };
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Device {
+    fn drop(&mut self) {
+        soh_log::log_info!(
+            "Destroying logical device \"{}\"",
+            self.physical.info().name
+        );
+
+        unsafe { self.logical.destroy_device(None) };
     }
 }
 

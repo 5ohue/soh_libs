@@ -19,7 +19,7 @@ impl Pool {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Pool {
     /// Creates a command pool that is used to do graphics operations
     pub fn new_graphics(device: &crate::DeviceRef) -> Result<Self> {
@@ -57,12 +57,6 @@ impl Pool {
             cmd_pool,
             queue_family_index: transfer_family,
         });
-    }
-
-    pub fn destroy(&self) {
-        unsafe {
-            self.device.destroy_command_pool(self.cmd_pool, None);
-        }
     }
 }
 
@@ -119,6 +113,16 @@ impl Pool {
             .collect::<Vec<_>>();
 
         return Ok(res);
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Pool {
+    fn drop(&mut self) {
+        unsafe {
+            self.device.destroy_command_pool(self.cmd_pool, None);
+        }
     }
 }
 
