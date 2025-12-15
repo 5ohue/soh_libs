@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 use super::convert::{hsluv_to_rgb, hsv_to_rgb, rgb_to_hsluv, rgb_to_hsv};
-use super::{HSLuv, HSV, RGB};
+use super::{Hsluv, Hsv, Rgb};
 //-----------------------------------------------------------------------------
 
 pub fn lerp(a: f64, b: f64, t: f64) -> f64 {
@@ -9,17 +9,17 @@ pub fn lerp(a: f64, b: f64, t: f64) -> f64 {
 
 //-----------------------------------------------------------------------------
 
-pub fn lerp_rgb(a: &RGB, b: &RGB, t: f64) -> RGB {
+pub fn lerp_rgb(a: &Rgb, b: &Rgb, t: f64) -> Rgb {
     let r = lerp(a.r as f64, b.r as f64, t).round();
     let g = lerp(a.g as f64, b.g as f64, t).round();
     let b = lerp(a.b as f64, b.b as f64, t).round();
 
-    return RGB::new(r as u8, g as u8, b as u8);
+    return Rgb::new(r as u8, g as u8, b as u8);
 }
 
 //-----------------------------------------------------------------------------
 
-pub fn lerp_hsv(a: &HSV, b: &HSV, t: f64, clockwise: bool, closest: bool) -> HSV {
+pub fn lerp_hsv(a: &Hsv, b: &Hsv, t: f64, clockwise: bool, closest: bool) -> Hsv {
     let mut h = lerp(a.h, b.h, t);
 
     if closest {
@@ -44,10 +44,10 @@ pub fn lerp_hsv(a: &HSV, b: &HSV, t: f64, clockwise: bool, closest: bool) -> HSV
         }
     }
 
-    return HSV::new(h, lerp(a.s, b.s, t), lerp(a.v, b.v, t));
+    return Hsv::new(h, lerp(a.s, b.s, t), lerp(a.v, b.v, t));
 }
 
-pub fn lerp_hsluv(a: &HSLuv, b: &HSLuv, t: f64, clockwise: bool, closest: bool) -> HSLuv {
+pub fn lerp_hsluv(a: &Hsluv, b: &Hsluv, t: f64, clockwise: bool, closest: bool) -> Hsluv {
     let mut h = lerp(a.h, b.h, t);
 
     if closest {
@@ -72,12 +72,12 @@ pub fn lerp_hsluv(a: &HSLuv, b: &HSLuv, t: f64, clockwise: bool, closest: bool) 
         }
     }
 
-    return HSLuv::new(h, lerp(a.s, b.s, t), lerp(a.v, b.v, t));
+    return Hsluv::new(h, lerp(a.s, b.s, t), lerp(a.v, b.v, t));
 }
 
 //-----------------------------------------------------------------------------
 // Linear interpolation by converting to a different color format in between
-pub fn lerp_rgb_hsv(a: &RGB, b: &RGB, t: f64, clockwise: bool, closest: bool) -> RGB {
+pub fn lerp_rgb_hsv(a: &Rgb, b: &Rgb, t: f64, clockwise: bool, closest: bool) -> Rgb {
     return hsv_to_rgb(&lerp_hsv(
         &rgb_to_hsv(a),
         &rgb_to_hsv(b),
@@ -87,7 +87,7 @@ pub fn lerp_rgb_hsv(a: &RGB, b: &RGB, t: f64, clockwise: bool, closest: bool) ->
     ));
 }
 
-pub fn lerp_rgb_hsluv(a: &RGB, b: &RGB, t: f64, clockwise: bool, closest: bool) -> RGB {
+pub fn lerp_rgb_hsluv(a: &Rgb, b: &Rgb, t: f64, clockwise: bool, closest: bool) -> Rgb {
     return hsluv_to_rgb(&lerp_hsluv(
         &rgb_to_hsluv(a),
         &rgb_to_hsluv(b),

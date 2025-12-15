@@ -3,22 +3,25 @@ pub mod convert;
 pub mod lerp;
 //-----------------------------------------------------------------------------
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub struct RGB {
+pub struct Rgb {
     pub r: u8,
     pub g: u8,
     pub b: u8,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
-pub struct HSV {
+pub struct Hsv {
     pub h: f64,
     pub s: f64,
     pub v: f64,
 }
 
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[derive(Debug, Copy, Clone, PartialEq, PartialOrd)]
-pub struct HSLuv {
+pub struct Hsluv {
     pub h: f64,
     pub s: f64,
     pub v: f64,
@@ -26,29 +29,29 @@ pub struct HSLuv {
 
 //-----------------------------------------------------------------------------
 
-impl RGB {
+impl Rgb {
     pub const fn new(r: u8, g: u8, b: u8) -> Self {
-        return RGB { r, g, b };
+        return Rgb { r, g, b };
     }
 }
 
-impl Default for RGB {
+impl Default for Rgb {
     fn default() -> Self {
-        return RGB { r: 0, g: 0, b: 0 };
+        return Rgb { r: 0, g: 0, b: 0 };
     }
 }
 
 //-----------------------------------------------------------------------------
 
-impl HSV {
+impl Hsv {
     pub const fn new(h: f64, s: f64, v: f64) -> Self {
-        return HSV { h, s, v };
+        return Hsv { h, s, v };
     }
 }
 
-impl Default for HSV {
+impl Default for Hsv {
     fn default() -> Self {
-        return HSV {
+        return Hsv {
             h: 0.0,
             s: 0.0,
             v: 0.0,
@@ -58,15 +61,15 @@ impl Default for HSV {
 
 //-----------------------------------------------------------------------------
 
-impl HSLuv {
+impl Hsluv {
     pub const fn new(h: f64, s: f64, v: f64) -> Self {
-        return HSLuv { h, s, v };
+        return Hsluv { h, s, v };
     }
 }
 
-impl Default for HSLuv {
+impl Default for Hsluv {
     fn default() -> Self {
-        return HSLuv {
+        return Hsluv {
             h: 0.0,
             s: 0.0,
             v: 0.0,
@@ -74,6 +77,29 @@ impl Default for HSLuv {
     }
 }
 
+//-----------------------------------------------------------------------------
+// Utility colors:
+pub const BLACK: Rgb = Rgb::new(0, 0, 0);
+pub const WHITE: Rgb = Rgb::new(255, 255, 255);
+pub const GRAY: Rgb = Rgb::new(127, 127, 127);
+
+pub const RED: Rgb = Rgb::new(237, 28, 36);
+pub const ORANGE: Rgb = Rgb::new(255, 127, 39);
+pub const YELLOW: Rgb = Rgb::new(255, 242, 0);
+pub const GREEN: Rgb = Rgb::new(34, 177, 76);
+pub const BLUE: Rgb = Rgb::new(0, 128, 255);
+
+pub const LIGHT_RED: Rgb = Rgb::new(255, 128, 128);
+pub const LIGHT_ORANGE: Rgb = Rgb::new(255, 201, 14);
+pub const LIGHT_YELLOW: Rgb = Rgb::new(239, 228, 176);
+pub const LIGHT_GREEN: Rgb = Rgb::new(181, 230, 29);
+pub const LIGHT_BLUE: Rgb = Rgb::new(0, 162, 232);
+
+pub const DARK_RED: Rgb = Rgb::new(136, 0, 21);
+pub const DARK_ORANGE: Rgb = Rgb::new(128, 64, 0);
+pub const DARK_YELLOW: Rgb = Rgb::new(128, 128, 0);
+pub const DARK_GREEN: Rgb = Rgb::new(0, 128, 0);
+pub const DARK_BLUE: Rgb = Rgb::new(63, 72, 204);
 //-----------------------------------------------------------------------------
 
 #[cfg(test)]
@@ -84,35 +110,35 @@ mod test {
         "#FFFFFF", "#000000", "#00FF00", "#FF0000", "#0000FF", "#7F7FFE", "#FE7F00", "#018d60",
         "#ec008c", "#2a3ab5", "#c0fe7f", "#3c8eb8", "#948096",
     ];
-    static RGBS: [RGB; 13] = [
-        RGB::new(255, 255, 255),
-        RGB::new(0, 0, 0),
-        RGB::new(0, 255, 0),
-        RGB::new(255, 0, 0),
-        RGB::new(0, 0, 255),
-        RGB::new(127, 127, 254),
-        RGB::new(254, 127, 0),
-        RGB::new(1, 141, 96),
-        RGB::new(236, 0, 140),
-        RGB::new(42, 58, 181),
-        RGB::new(192, 254, 127),
-        RGB::new(60, 142, 184),
-        RGB::new(148, 128, 150),
+    static RGBS: [Rgb; 13] = [
+        Rgb::new(255, 255, 255),
+        Rgb::new(0, 0, 0),
+        Rgb::new(0, 255, 0),
+        Rgb::new(255, 0, 0),
+        Rgb::new(0, 0, 255),
+        Rgb::new(127, 127, 254),
+        Rgb::new(254, 127, 0),
+        Rgb::new(1, 141, 96),
+        Rgb::new(236, 0, 140),
+        Rgb::new(42, 58, 181),
+        Rgb::new(192, 254, 127),
+        Rgb::new(60, 142, 184),
+        Rgb::new(148, 128, 150),
     ];
-    static HSVS: [HSV; 13] = [
-        HSV::new(0.0, 0.0, 1.0),
-        HSV::new(0.0, 0.0, 0.0),
-        HSV::new(120.0, 1.0, 1.0),
-        HSV::new(0.0, 1.0, 1.0),
-        HSV::new(240.0, 1.0, 1.0),
-        HSV::new(240.0, 0.5, 0.996),
-        HSV::new(30.0, 1.0, 0.996),
-        HSV::new(160.7, 0.993, 0.553),
-        HSV::new(324.4, 1.0, 0.925),
-        HSV::new(233.1, 0.768, 0.71),
-        HSV::new(89.3, 0.5, 0.996),
-        HSV::new(200.3, 0.674, 0.722),
-        HSV::new(294.5, 0.147, 0.588),
+    static HSVS: [Hsv; 13] = [
+        Hsv::new(0.0, 0.0, 1.0),
+        Hsv::new(0.0, 0.0, 0.0),
+        Hsv::new(120.0, 1.0, 1.0),
+        Hsv::new(0.0, 1.0, 1.0),
+        Hsv::new(240.0, 1.0, 1.0),
+        Hsv::new(240.0, 0.5, 0.996),
+        Hsv::new(30.0, 1.0, 0.996),
+        Hsv::new(160.7, 0.993, 0.553),
+        Hsv::new(324.4, 1.0, 0.925),
+        Hsv::new(233.1, 0.768, 0.71),
+        Hsv::new(89.3, 0.5, 0.996),
+        Hsv::new(200.3, 0.674, 0.722),
+        Hsv::new(294.5, 0.147, 0.588),
     ];
 
     //-----------------------------------------------------------------------------
