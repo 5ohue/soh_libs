@@ -60,6 +60,7 @@ impl Framebuffer {
     }
 
     pub fn destroy(&self) {
+        // soh_log::log_debug!("Destroying framebuffer (0x{:x})", self.framebuffer.as_raw());
         unsafe {
             self.device.destroy_framebuffer(self.framebuffer, None);
 

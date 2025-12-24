@@ -24,10 +24,9 @@ impl SetLayout {
     pub fn new(device: &crate::DeviceRef, bindings: &[super::SetLayoutBinding]) -> Result<Self> {
         let vk_bindings = bindings
             .iter()
-            .enumerate()
-            .map(|(idx, binding)| {
+            .map(|binding| {
                 return vk::DescriptorSetLayoutBinding::default()
-                    .binding(idx as u32)
+                    .binding(binding.binding_num)
                     .descriptor_type(binding.descriptor_type)
                     .descriptor_count(binding.count)
                     .stage_flags(binding.state_flags);

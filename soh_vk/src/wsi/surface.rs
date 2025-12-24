@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 use anyhow::Result;
-use ash::vk;
+use ash::vk::{self, Handle};
 //-----------------------------------------------------------------------------
 
 pub struct Surface {
@@ -9,9 +9,15 @@ pub struct Surface {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Surface reference stored inside other vulkan types
+pub type SurfaceRef = std::rc::Rc<Surface>;
+//-----------------------------------------------------------------------------
+// Constructor
 impl Surface {
-    pub fn new(instance: &crate::InstanceRef, window: &winit::window::Window) -> Result<Surface> {
+    pub fn new(
+        instance: &crate::InstanceRef,
+        window: &winit::window::Window,
+    ) -> Result<SurfaceRef> {
         // Helper function
         fn get_ptr<T>(opt_ptr: Option<std::ptr::NonNull<T>>) -> *mut T {
             return match opt_ptr {
@@ -96,13 +102,18 @@ impl Surface {
             }
         }?;
 
-        return Ok(Surface {
+        return Ok(SurfaceRef::new(Surface {
             instance: instance.clone(),
             surface,
-        });
+        }));
     }
+}
 
-    pub fn destroy(&self) {
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Surface {
+    fn drop(&mut self) {
+        soh_log::log_info!("Destroying surface (0x{:x})", self.surface.as_raw());
         unsafe {
             self.instance
                 .instance_surface()

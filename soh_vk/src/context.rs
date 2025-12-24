@@ -50,7 +50,7 @@ pub struct VulkanContext {
     /*
      * WSI
      */
-    surface: crate::Surface,
+    surface: crate::SurfaceRef,
     swapchain: crate::Swapchain,
     render_pass: crate::RenderPass,
     framebuffers: Vec<crate::Framebuffer>,
@@ -147,8 +147,7 @@ impl VulkanContext {
 
         let device = crate::Device::new(&instance, &surface)?;
 
-        let swapchain =
-            crate::Swapchain::new(&device, &surface, (win_size.width, win_size.height))?;
+        let swapchain = crate::Swapchain::new(&device, (win_size.width, win_size.height))?;
         let render_pass = crate::RenderPass::new_simple(&device, swapchain.image_format())?;
         let framebuffers =
             crate::Framebuffer::new_from_swapchain(&device, &swapchain, &render_pass)?;
@@ -315,7 +314,7 @@ impl VulkanContext {
         /*
          * Recreate the swapchain
          */
-        self.swapchain.recreate(&self.surface, window_size)?;
+        self.swapchain.recreate(window_size)?;
 
         /*
          * Recreate framebuffers
@@ -419,9 +418,6 @@ impl Drop for VulkanContext {
         for framebuffer in self.framebuffers.iter() {
             framebuffer.destroy();
         }
-        self.render_pass.destroy();
-        self.swapchain.destroy();
-        self.surface.destroy();
 
         self.debug_messenger = None;
     }

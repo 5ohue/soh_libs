@@ -20,8 +20,8 @@ pub fn copy_buffer(
     dst: &Buffer,
     size: u64,
 ) -> Result<()> {
-    assert!(size <= src.size());
-    assert!(size <= dst.size());
+    assert!(size <= src.memory_size());
+    assert!(size <= dst.memory_size());
 
     /*
      * Create transfer command buffer

@@ -1,18 +1,23 @@
 //-----------------------------------------------------------------------------
 use anyhow::Result;
-use ash::vk;
+use ash::vk::{self, Handle};
 //-----------------------------------------------------------------------------
 
 pub struct Pool {
     device: crate::DeviceRef,
 
     cmd_pool: vk::CommandPool,
+
+    queue_type: crate::QueueType,
     queue_family_index: u32,
 }
 
 //-----------------------------------------------------------------------------
 // Getters
 impl Pool {
+    pub fn queue_type(&self) -> crate::QueueType {
+        return self.queue_type;
+    }
     pub fn queue_family_index(&self) -> u32 {
         return self.queue_family_index;
     }
@@ -36,6 +41,7 @@ impl Pool {
         return Ok(Pool {
             device: device.clone(),
             cmd_pool,
+            queue_type: crate::QueueType::Graphics,
             queue_family_index: graphics_family,
         });
     }
@@ -55,6 +61,7 @@ impl Pool {
         return Ok(Pool {
             device: device.clone(),
             cmd_pool,
+            queue_type: crate::QueueType::Transfer,
             queue_family_index: transfer_family,
         });
     }
@@ -120,6 +127,17 @@ impl Pool {
 // Drop
 impl Drop for Pool {
     fn drop(&mut self) {
+        let queue_type_str = match self.queue_type {
+            crate::QueueType::Graphics => "graphics",
+            crate::QueueType::Transfer => "transfer",
+            crate::QueueType::Present => "present",
+        };
+        soh_log::log_info!(
+            "Destroying {} command pool (0x{:x})",
+            queue_type_str,
+            self.cmd_pool.as_raw()
+        );
+
         unsafe {
             self.device.destroy_command_pool(self.cmd_pool, None);
         }

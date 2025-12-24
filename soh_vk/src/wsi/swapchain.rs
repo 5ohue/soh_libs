@@ -1,6 +1,6 @@
 //-----------------------------------------------------------------------------
 use anyhow::Result;
-use ash::vk;
+use ash::vk::{self, Handle};
 //-----------------------------------------------------------------------------
 
 pub struct Swapchain {
@@ -28,49 +28,34 @@ impl Swapchain {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl Swapchain {
-    pub fn new(
-        device: &crate::DeviceRef,
-        surface: &crate::Surface,
-        window_size: (u32, u32),
-    ) -> Result<Self> {
+    pub fn new(device: &crate::DeviceRef, window_size: (u32, u32)) -> Result<Self> {
         soh_log::log_debug!("Creating swapchain for window size {:?}", window_size);
 
-        return Self::create_swapchain(device, surface, window_size, None);
+        return Self::create_swapchain(device, window_size, None);
     }
 
-    pub fn recreate(&mut self, surface: &crate::Surface, window_size: (u32, u32)) -> Result<()> {
+    pub fn recreate(&mut self, window_size: (u32, u32)) -> Result<()> {
         soh_log::log_debug!("Rereating swapchain for window size {:?}", window_size);
 
-        // let new_swapchain = Self::create_swapchain(&self.device, surface, window_size, Some(self))?;
-        // self.destroy();
-        // *self = new_swapchain;
-
         self.destroy();
-        *self = Self::create_swapchain(&self.device, surface, window_size, None)?;
+        *self = Self::create_swapchain(&self.device, window_size, None)?;
 
         return Ok(());
     }
 
-    pub fn destroy(&self) {
-        unsafe {
-            self.device
-                .device_swapchain()
-                .destroy_swapchain(**self, None);
-        }
-    }
-
     fn create_swapchain(
         device: &crate::DeviceRef,
-        surface: &crate::Surface,
         window_size: (u32, u32),
         old_swapchain: Option<&Self>,
     ) -> Result<Self> {
         /*
          * Get GPU info
          */
-        let swapchain_support = device.physical().query_swapchain_support_info(surface)?;
+        let swapchain_support = device
+            .physical()
+            .query_swapchain_support_info(device.surface())?;
         let queue_family_info = device.physical().queue_family_indices();
 
         let queue_family_indices = queue_family_info
@@ -92,7 +77,7 @@ impl Swapchain {
          * Create swapchain
          */
         let mut create_info = vk::SwapchainCreateInfoKHR::default()
-            .surface(**surface)
+            .surface(***device.surface())
             .min_image_count(image_count)
             .image_format(surface_format.format)
             .image_color_space(surface_format.color_space)
@@ -126,6 +111,20 @@ impl Swapchain {
             extent,
             num_of_images,
         });
+    }
+
+    fn destroy(&mut self) {
+        if self.is_null() {
+            return;
+        }
+
+        unsafe {
+            self.device
+                .device_swapchain()
+                .destroy_swapchain(**self, None);
+        }
+
+        self.swapchain = vk::SwapchainKHR::null();
     }
 }
 
@@ -235,6 +234,14 @@ impl Swapchain {
         };
 
         return image_count;
+    }
+}
+
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for Swapchain {
+    fn drop(&mut self) {
+        self.destroy();
     }
 }
 

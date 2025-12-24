@@ -73,7 +73,7 @@ impl Default for Attachment {
 }
 
 //-----------------------------------------------------------------------------
-// Constructor, destructor
+// Constructor
 impl RenderPass {
     /// Create render pass with only one color attachment with specified format
     pub fn new_simple(device: &crate::DeviceRef, format: crate::Format) -> Result<Self> {
@@ -140,8 +140,12 @@ impl RenderPass {
             render_pass,
         });
     }
+}
 
-    pub fn destroy(&self) {
+//-----------------------------------------------------------------------------
+// Drop
+impl Drop for RenderPass {
+    fn drop(&mut self) {
         unsafe {
             self.device.destroy_render_pass(self.render_pass, None);
         }

@@ -29,10 +29,7 @@ impl Set {
                 return ubs
                     .iter()
                     .map(|&ub| {
-                        return vk::DescriptorBufferInfo::default()
-                            .buffer(ub.buffer().buffer())
-                            .offset(0)
-                            .range(ub.buffer().size());
+                        return Self::get_buffer_descriptor_info(ub.buffer());
                     })
                     .collect::<Vec<_>>();
             })
@@ -63,6 +60,13 @@ impl Set {
 
     pub(super) fn from_handle(device: crate::DeviceRef, set: vk::DescriptorSet) -> Self {
         return Set { device, set };
+    }
+
+    fn get_buffer_descriptor_info(buffer: &crate::Buffer) -> vk::DescriptorBufferInfo {
+        return vk::DescriptorBufferInfo::default()
+            .buffer(**buffer)
+            .offset(0)
+            .range(buffer.buffer_size());
     }
 }
 

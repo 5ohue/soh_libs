@@ -9,6 +9,7 @@ pub struct Buffer {
     buffer: vk::Buffer,
     usage: crate::BufferUsageFlags,
 
+    buffer_size: u64,
     memory: super::Memory,
 }
 
@@ -21,7 +22,12 @@ impl Buffer {
     pub fn memory(&self) -> &super::Memory {
         return &self.memory;
     }
-    pub fn size(&self) -> u64 {
+    /// Buffer size ( could be smaller than actual allocated size )
+    pub fn buffer_size(&self) -> u64 {
+        return self.buffer_size;
+    }
+    /// Actual allocated size
+    pub fn memory_size(&self) -> u64 {
         return self.memory.size();
     }
     pub fn memory_mut(&mut self) -> &mut super::Memory {
@@ -71,6 +77,7 @@ impl Buffer {
         return Ok(Buffer {
             device: device.clone(),
             buffer,
+            buffer_size: size,
             memory,
             usage,
         });

@@ -5,7 +5,7 @@ pub use manager::*;
 //-----------------------------------------------------------------------------
 
 use anyhow::Result;
-use ash::vk;
+use ash::vk::{self, Handle};
 
 //-----------------------------------------------------------------------------
 
@@ -35,6 +35,7 @@ impl Shader {
 // Drop
 impl Drop for Shader {
     fn drop(&mut self) {
+        soh_log::log_debug!("Destroying shader (0x{:x})", self.shader.as_raw());
         unsafe {
             self.device.destroy_shader_module(self.shader, None);
         }

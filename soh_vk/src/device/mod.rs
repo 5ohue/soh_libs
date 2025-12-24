@@ -11,6 +11,9 @@ pub struct Device {
     // Keep instance from being destoyed
     instance: crate::InstanceRef,
 
+    // Keep surface from being destroyed
+    surface: crate::SurfaceRef,
+
     physical: physical::Device,
     logical: ash::Device,
 
@@ -35,8 +38,11 @@ unsafe impl Sync for Device {}
 //-----------------------------------------------------------------------------
 // Getters
 impl Device {
-    pub fn instance(&self) -> &crate::Instance {
+    pub fn instance(&self) -> &crate::InstanceRef {
         return &self.instance;
+    }
+    pub fn surface(&self) -> &crate::SurfaceRef {
+        return &self.surface;
     }
     pub fn physical(&self) -> &physical::Device {
         return &self.physical;
@@ -59,7 +65,7 @@ impl Device {
 //-----------------------------------------------------------------------------
 // Constructor
 impl Device {
-    pub fn new(instance: &crate::InstanceRef, surface: &vk::SurfaceKHR) -> Result<DeviceRef> {
+    pub fn new(instance: &crate::InstanceRef, surface: &crate::SurfaceRef) -> Result<DeviceRef> {
         soh_log::log_info!("Creating logical device");
 
         /*
@@ -123,6 +129,7 @@ impl Device {
 
         return Ok(DeviceRef::new(Device {
             instance: instance.clone(),
+            surface: surface.clone(),
             physical,
             logical: device,
             device_swapchain,

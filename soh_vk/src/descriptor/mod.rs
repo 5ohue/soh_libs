@@ -16,6 +16,7 @@ use ash::vk;
 
 #[derive(Debug, Clone, Copy)]
 pub struct SetLayoutBinding {
+    pub binding_num: u32,
     pub descriptor_type: vk::DescriptorType,
     pub count: u32,
     pub state_flags: vk::ShaderStageFlags,
@@ -24,6 +25,7 @@ pub struct SetLayoutBinding {
 impl Default for SetLayoutBinding {
     fn default() -> Self {
         return SetLayoutBinding {
+            binding_num: 0,
             descriptor_type: vk::DescriptorType::UNIFORM_BUFFER,
             count: 1,
             state_flags: vk::ShaderStageFlags::ALL_GRAPHICS,
