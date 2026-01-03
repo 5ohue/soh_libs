@@ -48,7 +48,7 @@ impl Instance {
         /*
          * Load the vulkan library
          */
-        let entry = Self::load_entry()?;
+        let entry = unsafe { ash::Entry::load()? };
 
         /*
          * Get the required extensions and layers
@@ -128,25 +128,6 @@ impl Instance {
 //-----------------------------------------------------------------------------
 // Specific implementation
 impl Instance {
-    fn load_entry() -> Result<ash::Entry> {
-        // TODO: this should probably be done in a better way
-        let lib_path: &str = {
-            if cfg!(target_os = "windows") {
-                "vulkan-1.dll"
-            } else if cfg!(target_os = "linux") {
-                "/usr/lib/libvulkan.so"
-            } else if cfg!(target_os = "macos") {
-                "libvulkan.dylib"
-            } else {
-                todo!()
-            }
-        };
-
-        let entry = unsafe { ash::Entry::load_from(lib_path)? };
-
-        return Ok(entry);
-    }
-
     fn get_extensions(surface_platform: crate::wsi::Platform) -> Vec<&'static CStr> {
         /*
          * Require the VK_KHR_surface
